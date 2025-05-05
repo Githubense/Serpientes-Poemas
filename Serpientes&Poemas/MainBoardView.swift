@@ -6,7 +6,11 @@ struct MainBoardView: View {
     @State private var showGameBoard = false
     @State private var isMuted = false // State to control audio muting
     @State private var isSoundtrackMuted = false // State to control soundtrack muting
+    @State private var showSettingsMenu = false // Controls the settings menu visibility
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass // Detect device type
+    @Environment(\.scenePhase) private var scenePhase // Monitor app lifecycle
+
+    private let snowSystem = createSnow()
 
     var body: some View {
         ZStack {
@@ -16,7 +20,7 @@ struct MainBoardView: View {
                 .ignoresSafeArea()
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
             
-            VortexView(createSnow()) {
+            VortexView(snowSystem) {
                 Image("leaf")
                     .frame(width: 1)
                     .tag("leaf")
@@ -69,17 +73,109 @@ struct MainBoardView: View {
                 }
                 .padding(.bottom, -20)
             }
+            
+            // Settings Button in the lower-right corner
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        withAnimation {
+                            showSettingsMenu.toggle()
+                        }
+                    }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: horizontalSizeClass == .compact ? 30 : 50)) // Smaller for iPhone, larger for iPad
+                            .foregroundColor(.gray)
+                            .padding()
+                            .background(Color.white.opacity(0.8))
+                            .clipShape(Circle())
+                            .shadow(color: .gray, radius: 4, x: 2, y: 2)
+                    }
+                    .padding()
+                }
+            }
+            
+            // Settings menu
+            if showSettingsMenu {
+                ZStack {
+                    // Semi-transparent overlay to block interaction with the background
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            // Close the settings menu if the overlay is tapped
+                            showSettingsMenu = false
+                        }
+
+                    // Settings menu content
+                    VStack(spacing: 20) {
+                        Text("Settings")
+                            .font(.headline)
+                            .foregroundColor(.white)
+
+                        Button(action: {
+                            isSoundtrackMuted.toggle()
+                            if isSoundtrackMuted {
+                                AudioManager.shared.pauseSoundtrack()
+                            } else {
+                                AudioManager.shared.playSoundtrack()
+                            }
+                        }) {
+                            Text(isSoundtrackMuted ? "Unmute Soundtrack" : "Mute Soundtrack")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.gray.opacity(0.8))
+                                .cornerRadius(10)
+                        }
+
+                        Button(action: {
+                            isMuted.toggle()
+                        }) {
+                            Text(isMuted ? "Unmute Voice" : "Mute Voice")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.gray.opacity(0.8))
+                                .cornerRadius(10)
+                        }
+
+                        Button(action: {
+                            showSettingsMenu = false
+                        }) {
+                            Text("Close")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.red.opacity(0.8))
+                                .cornerRadius(10)
+                        }
+                    }
+                    .padding()
+                    .background(Color.black.opacity(0.9))
+                    .cornerRadius(15)
+                    .shadow(radius: 10)
+                }
+            }
         }
         .onAppear {
             // Start the soundtrack when the view appears
             if !isSoundtrackMuted {
-                AudioManager.shared.playSoundtrack()
+                DispatchQueue.main.async {
+                    AudioManager.shared.playSoundtrack()
+                }
             }
         }
         .onDisappear {
-            // Pause the soundtrack only if muted
-            if isSoundtrackMuted {
-                AudioManager.shared.pauseSoundtrack()
+            // Stop the soundtrack when the view disappears
+            AudioManager.shared.stopSoundtrack()
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if newPhase == .background || newPhase == .inactive {
+                // Stop the soundtrack when the app goes to the background or becomes inactive
+                AudioManager.shared.stopSoundtrack()
+            } else if newPhase == .active {
+                // Resume the soundtrack when the app becomes active
+                if !isSoundtrackMuted {
+                    AudioManager.shared.playSoundtrack()
+                }
             }
         }
         .fullScreenCover(isPresented: $showGameBoard) {
@@ -102,16 +198,22 @@ struct GameBoardView: View {
     
     // MARK: - Verse Spaces
     let verseSpaces: [Int: String] = [
-        0: "Verse 0: The beginning of the journey.",
-        1: "Verse 1: A step forward.",
-        2: "Verse 2: The path unfolds.",
-        3: "Verse 3: A moment of reflection.",
-        4: "Verse 4: The journey continues.",
-        5: "Verse 5: A glimpse of the horizon.",
-        10: "Verse 6: A twist in the path.",
-        18: "Verse 7: Overcoming the climb.",
-        25: "Verse 8: The calm before the storm.",
-        34: "Verse 9: A shining horizon."
+        1: "Estas al inicio formado",
+        4: "Los dados ruedan y escapan a tu mano",
+        7: "Avanzas sin ningún atraso",
+        10: "Entre casillas buscas el atajo",
+        13: "No ves los dientes del engaño",
+        15: "Y la boca de serpiente te lleva hacia abajo",
+        18: "Se acerca mordiendo el fracaso",
+        22: "Ganar parece algo lejano",
+        25: "Tiras dados, que siga el relajo",
+        28: "Atrás medio tablero ha quedado",
+        31: "Entre risas pegas brincos y saltos",
+        34: "Subes la escalera, peldaño a peldaño",
+        37: "A la meta estás más cercano",
+        40: "Avanzas, cuidando cada paso",
+        43: "Escalas hasta lo más alto",
+        46: "En la meta estás, has ganado"
     ]
     let totalSpaces: Int
     
@@ -173,17 +275,7 @@ struct GameBoardView: View {
                     VStack(spacing: 20) {
                         collectedVersesView
                         diceButton
-                        
-                        // Settings Button
-                        Button(action: {
-                            withAnimation {
-                                showSettingsMenu.toggle()
-                            }
-                        }) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 40))
-                                .foregroundColor(.gray)
-                        }
+
                     }
                     .frame(width: 200)
                 }
@@ -194,6 +286,27 @@ struct GameBoardView: View {
             .disabled(showSettingsMenu) // Disable interaction with the background when the menu is active
             .blur(radius: showSettingsMenu ? 5 : 0) // Optional: Add a blur effect when the menu is active
 
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        withAnimation {
+                            showSettingsMenu.toggle()
+                        }
+                    }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: horizontalSizeClass == .compact ? 30 : 50)) // Smaller for iPhone, larger for iPad
+                            .foregroundColor(.gray)
+                            .padding()
+                            .background(Color.white.opacity(0.8))
+                            .clipShape(Circle())
+                            .shadow(color: .gray, radius: 4, x: 2, y: 2)
+                    }
+                    .padding()
+                }
+            }
+            .ignoresSafeArea(.all) // Ignore safe area for the settings button
             // Settings menu
             if showSettingsMenu {
                 ZStack {
@@ -309,9 +422,9 @@ struct GameBoardView: View {
                                         .clipped()
                                 } else {
                                     // Display the image for the current position or fallback to default
-                                    Image(UIImage(named: String(format: "%02d", position)) != nil ? String(format: "%02d", position) : "default_space")
+                                    imageForPosition(position)
                                         .resizable()
-                                        .scaledToFill()
+                                        .scaledToFit()
                                         .frame(width: cellWidth, height: cellWidth)
                                         .cornerRadius(10) // Add rounded corners
                                         .clipped()
@@ -349,7 +462,9 @@ struct GameBoardView: View {
             .contentShape(Rectangle()) // Make the entire grid tappable
             .onTapGesture {
                 withAnimation(.easeInOut(duration: 0.5)) {
-                    showDetailView = true
+                    if playerPosition != 0 {
+                        showDetailView = true
+                    }
                 }
             }
         }
@@ -484,6 +599,14 @@ struct GameBoardView: View {
             return reversedRow * columns + column
         }
     }
+
+    private func imageForPosition(_ position: Int) -> Image {
+        if let uiImage = UIImage(named: String(format: "%02d", position)) {
+            return Image(uiImage: uiImage)
+        } else {
+            return Image("default_space")
+        }
+    }
 }
 
 struct DetailView: View {
@@ -499,11 +622,8 @@ struct DetailView: View {
             // Dynamically load the background image based on the device type
             Image(horizontalSizeClass == .compact ? "background-iphone" : "background-ipad")
                 .resizable()
-                .ignoresSafeArea()  
+                .ignoresSafeArea()
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-            // Snow effect 
-
-
 
             // Foreground content of the DetailView
             VStack(spacing: 20) {
@@ -511,7 +631,7 @@ struct DetailView: View {
                     Image("blankSpace") // Image for the first space
                         .resizable()
                         .scaledToFit()
-                        .frame(width: horizontalSizeClass == .compact ? 150 : 200, 
+                        .frame(width: horizontalSizeClass == .compact ? 150 : 200,
                                height: horizontalSizeClass == .compact ? 150 : 200) // Adjust size dynamically
                         .cornerRadius(15)
                         .shadow(color: .gray, radius: 4, x: 2, y: 2)
@@ -519,16 +639,16 @@ struct DetailView: View {
                     Image(UIImage(named: String(format: "%02d", position)) != nil ? String(format: "%02d", position) : "default_space")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: horizontalSizeClass == .compact ? 150 : 200, 
+                        .frame(width: horizontalSizeClass == .compact ? 150 : 200,
                                height: horizontalSizeClass == .compact ? 150 : 200) // Adjust size dynamically
                         .cornerRadius(15)
                         .shadow(color: .gray, radius: 4, x: 2, y: 2)
                 }
-                
+
                 Text("Posición: \(position)")
                     .font(.system(size: horizontalSizeClass == .compact ? 20 : 30)) // Adjust font size dynamically
                     .foregroundColor(.green)
-                
+
                 if let verse = verse {
                     Text("Verso:")
                         .font(.headline)
@@ -541,7 +661,12 @@ struct DetailView: View {
                         .background(Color.teal.opacity(0.8))
                         .cornerRadius(10)
                         .onAppear {
-                            speakText(verse, isMuted: isMuted) // Pass isMuted to speakText
+                            // Lower soundtrack volume to 20%
+                            AudioManager.shared.setVolume(to: 0.2, duration: 1.0)
+
+                            // Speak the verse at full volume
+                            speakText(verse, isMuted: isMuted)
+
                             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                 dismissAction()
                             }
@@ -564,12 +689,14 @@ struct DetailView: View {
         }
         .onAppear {
             if !isMuted {
-                AudioManager.shared.setVolume(to: 0.2, duration: 1.0) // Smoothly lower volume to 20%
+                // Lower soundtrack volume to 20%
+                AudioManager.shared.setVolume(to: 0.2, duration: 1.0)
             }
         }
         .onDisappear {
             if !isMuted {
-                AudioManager.shared.setVolume(to: 0.5, duration: 1.0) // Restore volume to 50% when leaving
+                // Restore soundtrack volume to 50% when leaving
+                AudioManager.shared.setVolume(to: 0.5, duration: 1.0)
             }
         }
     }
@@ -657,7 +784,7 @@ func createSnow() -> VortexSystem {
 
 func speakText(_ text: String, isMuted: Bool) {
     guard !isMuted else { return } // Do not speak if muted
-    let synthesizer = AVSpeechSynthesizer()
+    let synthesizer = AudioManager.shared.speechSynthesizer
     let utterance = AVSpeechUtterance(string: text)
     utterance.voice = AVSpeechSynthesisVoice(language: "es-MX") // Set to Spanish (Mexico)
     synthesizer.speak(utterance)

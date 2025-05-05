@@ -3,6 +3,7 @@ import AVFoundation
 class AudioManager {
     static let shared = AudioManager()
     private var soundtrackPlayer: AVAudioPlayer?
+    let speechSynthesizer = AVSpeechSynthesizer() // Shared synthesizer
 
     private init() {
         guard let url = Bundle.main.url(forResource: "Jungle Trip - Quincas Moreira", withExtension: "mp3") else { return }
@@ -44,5 +45,9 @@ class AudioManager {
                 player.volume = currentVolume + volumeStep * Float(step)
             }
         }
+    }
+
+    func stopSpeech() {
+        speechSynthesizer.stopSpeaking(at: .immediate)
     }
 }
