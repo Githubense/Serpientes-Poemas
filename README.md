@@ -20,7 +20,7 @@ Here’s a preview of the first 5 spaces on the board:
 
 | Space 1 | Space 2 | Space 3 | Space 4 | Space 5 |
 |---------|---------|---------|---------|---------|
-| ![Space 1](Assets.xcassets/01.imageset/01.png) | ![Space 2](Assets.xcassets/02.imageset/02.png) | ![Space 3](Assets.xcassets/03.imageset/03.png) | ![Space 4](Assets.xcassets/04.imageset/04.png) | ![Space 5](Assets.xcassets/05.imageset/05.png) |
+| ![Space 1](content/01.png) | ![Space 2](content/02.png) | ![Space 3](content/03.png) | ![Space 4](content/04.png) | ![Space 5](content/05.png) |
 
 ---
 
