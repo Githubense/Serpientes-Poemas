@@ -625,64 +625,63 @@ struct DetailView: View {
                 .ignoresSafeArea()
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
 
+
             // Foreground content of the DetailView
-            VStack(spacing: 20) {
-                if position == 0 || position == totalSpaces - 1 {
-                    Image("blankSpace") // Image for the first space
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: horizontalSizeClass == .compact ? 150 : 200,
-                               height: horizontalSizeClass == .compact ? 150 : 200) // Adjust size dynamically
-                        .cornerRadius(15)
-                        .shadow(color: .gray, radius: 4, x: 2, y: 2)
-                } else {
-                    Image(UIImage(named: String(format: "%02d", position)) != nil ? String(format: "%02d", position) : "default_space")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: horizontalSizeClass == .compact ? 150 : 200,
-                               height: horizontalSizeClass == .compact ? 150 : 200) // Adjust size dynamically
-                        .cornerRadius(15)
-                        .shadow(color: .gray, radius: 4, x: 2, y: 2)
+            HStack(spacing: 20) {
+                // Left square for the position image
+                ZStack {
+                    if position == 0 || position == totalSpaces - 1 {
+                        Image("blankSpace") // Image for the first or last space
+                            .resizable()
+                            .scaledToFit()
+                            .cornerRadius(15)
+                            .shadow(color: .gray, radius: 4, x: 2, y: 2)
+                    } else {
+                        Image(UIImage(named: String(format: "%02d", position)) != nil ? String(format: "%02d", position) : "default_space")
+                            .resizable()
+                            .scaledToFit()
+                            .cornerRadius(15)
+                            .shadow(color: .gray, radius: 4, x: 2, y: 2)
+                    }
                 }
+                .padding()
+                // Right text for the verse
+                VStack(alignment: .leading, spacing: 10) {
+                    if let verse = verse {
+                        Text("Verso:")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Text(verse)
+                            .font(.body)
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.leading)
+                            .padding()
+                            .background(Color.teal.opacity(0.8))
+                            .cornerRadius(10)
+                            .onAppear {
+                                // Lower soundtrack volume to 20%
+                                AudioManager.shared.setVolume(to: 0.2, duration: 1.0)
 
-                Text("Posición: \(position)")
-                    .font(.system(size: horizontalSizeClass == .compact ? 20 : 30)) // Adjust font size dynamically
-                    .foregroundColor(.green)
+                                // Speak the verse at full volume
+                                speakText(verse, isMuted: isMuted)
 
-                if let verse = verse {
-                    Text("Verso:")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Text(verse)
-                        .font(.body)
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                        .background(Color.teal.opacity(0.8))
-                        .cornerRadius(10)
-                        .onAppear {
-                            // Lower soundtrack volume to 20%
-                            AudioManager.shared.setVolume(to: 0.2, duration: 1.0)
-
-                            // Speak the verse at full volume
-                            speakText(verse, isMuted: isMuted)
-
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                                dismissAction()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                    dismissAction()
+                                }
                             }
-                        }
-                } else {
-                    Text("No hay verso aquí.")
-                        .font(.body)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.teal.opacity(0.8))
-                        .cornerRadius(10)
-                        .onAppear {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                dismissAction()
+                    } else {
+                        Text("No hay verso aquí.")
+                            .font(.body)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.teal.opacity(0.8))
+                            .cornerRadius(10)
+                            .onAppear {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                    dismissAction()
+                                }
                             }
-                        }
+                    }
                 }
             }
             .padding()
