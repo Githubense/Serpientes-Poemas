@@ -226,12 +226,14 @@ struct SettingsMenu: View {
                 .onTapGesture {
                     showSettingsMenu = false // Close the settings menu when the overlay is tapped.
                 }
+                .accessibilityHidden(true) // Mark as decorative
 
             // Settings menu content.
             VStack(spacing: 20) {
                 Text("Configuración") // Title of the settings menu.
                     .font(.headline)
                     .foregroundColor(.white)
+                    .accessibilityLabel("Configuración")
 
                 // Toggle button to mute/unmute the soundtrack.
                 Button(action: {
@@ -251,6 +253,9 @@ struct SettingsMenu: View {
                             .font(.subheadline)
                     }
                 }
+                .accessibilityLabel("Música")
+                .accessibilityValue(isSoundtrackMuted ? "Apagada" : "Encendida")
+                .accessibilityHint("Activa o desactiva la música de fondo.")
 
                 // Toggle button to mute/unmute the voice narration.
                 Button(action: {
@@ -265,6 +270,9 @@ struct SettingsMenu: View {
                             .font(.subheadline)
                     }
                 }
+                .accessibilityLabel("Voz")
+                .accessibilityValue(isMuted ? "Apagada" : "Encendida")
+                .accessibilityHint("Activa o desactiva la narración de voz.")
 
                 // Button to close the settings menu.
                 Button(action: {
@@ -276,6 +284,8 @@ struct SettingsMenu: View {
                         .background(Color.red.opacity(0.8)) // Red background for the button.
                         .cornerRadius(10) // Rounded corners for the button.
                 }
+                .accessibilityLabel("Cerrar")
+                .accessibilityHint("Cierra el menú de configuración.")
             }
             .padding()
             .background(Color.black.opacity(0.9)) // Background color for the settings menu.
@@ -386,111 +396,52 @@ struct GameBoardView: View {
     
     var body: some View {
         ZStack {
+            // Background image
             Image(horizontalSizeClass == .compact ? "background-iphone" : "background-ipad")
                 .resizable()
                 .ignoresSafeArea()
-            
+                .accessibilityHidden(true) // Mark as decorative
+
             VStack {
                 Spacer()
-                
+
                 HStack {
                     boardGrid
                         .padding()
-                    
+                        .accessibilityLabel("Tablero de juego")
+                        .accessibilityHint("Contiene las casillas del juego. Toca una casilla para interactuar.")
+
                     Spacer()
-                    
+
                     VStack(spacing: 20) {
                         collectedVersesView
+                            .accessibilityLabel("Versos recogidos")
+                            .accessibilityHint("Lista de versos que has recogido durante el juego.")
+
                         diceButton
+                            .accessibilityLabel("Botón de dado")
+                            .accessibilityHint("Lanza el dado para avanzar en el tablero.")
 
                     }
                     .frame(width: 200)
                 }
                 .padding(.horizontal)
-                
+
                 Spacer()
             }
             .disabled(showSettingsMenu) // Disable interaction with the background when the menu is active
             .blur(radius: showSettingsMenu ? 5 : 0) // Optional: Add a blur effect when the menu is active
 
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        withAnimation {
-                            showSettingsMenu.toggle()
-                        }
-                    }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: horizontalSizeClass == .compact ? 30 : 50)) // Smaller for iPhone, larger for iPad
-                            .foregroundColor(.gray)
-                            .padding()
-                            .background(Color.white.opacity(0.8))
-                            .clipShape(Circle())
-                            .shadow(color: .gray, radius: 4, x: 2, y: 2)
-                    }
-                    .padding()
-                }
-            }
-            .ignoresSafeArea(.all) // Ignore safe area for the settings button
-            // Settings menu
+                        // Settings button in the lower-right corner
+            SettingsButton(showSettingsMenu: $showSettingsMenu, horizontalSizeClass: horizontalSizeClass)
+                .accessibilityLabel("Botón de configuración")
+                .accessibilityHint("Abre el menú de configuración.")
+
+            // Settings menu overlay
             if showSettingsMenu {
-                ZStack {
-                    // Semi-transparent overlay to block interaction with the background
-                    Color.black.opacity(0.5)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            // Close the settings menu if the overlay is tapped
-                            showSettingsMenu = false
-                        }
-
-                    // Settings menu content
-                    VStack(spacing: 20) {
-                        Text("Settings")
-                            .font(.headline)
-                            .foregroundColor(.white)
-
-                        Button(action: {
-                            isSoundtrackMuted.toggle()
-                            if isSoundtrackMuted {
-                                AudioManager.shared.pauseSoundtrack()
-                            } else {
-                                AudioManager.shared.playSoundtrack()
-                            }
-                        }) {
-                            Text(isSoundtrackMuted ? "Unmute Soundtrack" : "Mute Soundtrack")
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.gray.opacity(0.8))
-                                .cornerRadius(10)
-                        }
-
-                        Button(action: {
-                            isMuted.toggle()
-                        }) {
-                            Text(isMuted ? "Unmute Voice" : "Mute Voice")
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.gray.opacity(0.8))
-                                .cornerRadius(10)
-                        }
-
-                        Button(action: {
-                            showSettingsMenu = false
-                        }) {
-                            Text("Close")
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.red.opacity(0.8))
-                                .cornerRadius(10)
-                        }
-                    }
-                    .padding()
-                    .background(Color.black.opacity(0.9))
-                    .cornerRadius(15)
-                    .shadow(radius: 10)
-                }
+                SettingsMenu(isMuted: $isMuted, isSoundtrackMuted: $isSoundtrackMuted, showSettingsMenu: $showSettingsMenu)
+                    .accessibilityLabel("Menú de configuración")
+                    .accessibilityHint("Ajusta la música y la voz del juego.")
             }
         }
         .onAppear {
@@ -602,21 +553,25 @@ struct GameBoardView: View {
             Text("Versos Recogidos:")
                 .font(.headline)
                 .foregroundColor(.green)
-            
+                .accessibilityLabel("Versos recogidos")
+
             if collectedVerses.isEmpty {
                 Text("Ningún verso recogido todavía.")
                     .font(.subheadline)
                     .foregroundColor(.white)
+                    .accessibilityLabel("No has recogido ningún verso todavía.")
             } else {
                 ForEach(collectedVerses, id: \.self) { verse in
                     Text(verse)
                         .font(.subheadline)
                         .foregroundColor(.white)
                         .transition(.opacity) // Fade in new verses
+                        .accessibilityLabel("Verso: \(verse)")
                 }
             }
         }
         .animation(.easeInOut(duration: 0.5), value: collectedVerses) // Animate changes to collectedVerses
+        .accessibilityElement(children: .combine) // Combine all verses into one VoiceOver element
     }
     
     private var diceButton: some View {
@@ -631,6 +586,9 @@ struct GameBoardView: View {
                 .shadow(color: .gray, radius: 4, x: 2, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel("Dado")
+        .accessibilityValue("Resultado actual: \(currentDiceImage.replacingOccurrences(of: "dice", with: ""))")
+        .accessibilityHint("Lanza el dado para avanzar en el tablero.")
     }
 
     // MARK: - Dice Roll Animation Logic

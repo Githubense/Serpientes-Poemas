@@ -11,6 +11,7 @@
 - **Immersive Audio**: Background music and voice narration enhance the experience.
 - **Device Adaptability**: Optimized for both iPhone and iPad with dynamic layouts.
 - **Customizable Settings**: Mute/unmute soundtrack and voice narration as desired.
+- **Accessibility**: Fully compliant with VoiceOver for an inclusive gaming experience.
 
 ---
 
@@ -39,6 +40,18 @@ Here’s a preview of the first 5 spaces on the board:
 - **Vortex**: Particle system for dynamic visual effects ([Vortex GitHub](https://github.com/twostraws/Vortex)).
 - **AVFoundation**: For audio playback and voice narration.
 - **Custom Fonts**: Beautiful typography using open-source fonts.
+
+---
+
+## Accessibility ♿
+
+**Serpientes & Poemas** is fully compliant with VoiceOver, ensuring an inclusive experience for all players. All interactive elements, such as the dice, board spaces, and settings menu, include accessibility labels, hints, and dynamic updates to provide meaningful feedback for VoiceOver users.
+
+---
+
+## Device Compatibility 📱💻
+
+The game is optimized for both **iPhone** and **iPad**, with dynamic layouts that adapt seamlessly to different screen sizes.
 
 ---
 
