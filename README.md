@@ -14,6 +14,16 @@
 
 ---
 
+## Board Preview 🎲
+
+Here’s a preview of the first 5 spaces on the board:
+
+| Space 1 | Space 2 | Space 3 | Space 4 | Space 5 |
+|---------|---------|---------|---------|---------|
+| ![Space 1](Assets.xcassets/01.imageset/01.png) | ![Space 2](Assets.xcassets/02.imageset/02.png) | ![Space 3](Assets.xcassets/03.imageset/03.png) | ![Space 4](Assets.xcassets/04.imageset/04.png) | ![Space 5](Assets.xcassets/05.imageset/05.png) |
+
+---
+
 ## How to Play 🎮
 
 1. **Start the Game**: Tap "Empezar" to begin your journey.
@@ -55,6 +65,12 @@ All fonts are open-source and used under their respective licenses.
 ## Acknowledgments 🙌
 
 This project was developed under the guidance of **Servicio Social UDLAP**. Special thanks to the contributors and the open-source community for their invaluable resources.
+
+---
+
+## Developed By 👨‍💻
+
+**Angel Adrian Pimienta Flores**
 
 ---
 
