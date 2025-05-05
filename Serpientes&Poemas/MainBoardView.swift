@@ -496,11 +496,15 @@ struct DetailView: View {
 
     var body: some View {
         ZStack {
-            // Blurred background of the existing GameBoardView
-            Color.black.opacity(0.5)
-                .ignoresSafeArea()
-                .blur(radius: 10) // Apply blur effect
-            
+            // Dynamically load the background image based on the device type
+            Image(horizontalSizeClass == .compact ? "background-iphone" : "background-ipad")
+                .resizable()
+                .ignoresSafeArea()  
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+            // Snow effect 
+
+
+
             // Foreground content of the DetailView
             VStack(spacing: 20) {
                 if position == 0 || position == totalSpaces - 1 {
@@ -612,18 +616,6 @@ struct EndGameView: View {
                     collectedVerses.forEach { speakText($0, isMuted: isMuted) } // Pass isMuted to speakText
                     dismissAction()
                 }) {
-                    Text("Cerrar")
-                        .font(.headline)
-                        .foregroundColor(.teal)
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(10)
-                        .shadow(color: .gray, radius: 4, x: 2, y: 2)
-                }
-                
-                Button(action: {
-                    dismissAction() // Reset the game and dismiss the view
-                }) {
                     Text("Nueva Partida")
                         .font(.headline)
                         .foregroundColor(.teal)
@@ -632,6 +624,7 @@ struct EndGameView: View {
                         .cornerRadius(10)
                         .shadow(color: .gray, radius: 4, x: 2, y: 2)
                 }
+
             }
             .padding()
         }
