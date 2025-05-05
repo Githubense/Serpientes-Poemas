@@ -739,8 +739,7 @@ struct EndGameView: View {
                 .cornerRadius(10)
                 
                 Button(action: {
-                    collectedVerses.forEach { speakText($0, isMuted: isMuted) } // Pass isMuted to speakText
-                    dismissAction()
+                    dismissAction() // Only dismiss the view
                 }) {
                     Text("Nueva Partida")
                         .font(.headline)
@@ -750,11 +749,14 @@ struct EndGameView: View {
                         .cornerRadius(10)
                         .shadow(color: .gray, radius: 4, x: 2, y: 2)
                 }
-
             }
             .padding()
         }
         .onAppear {
+            // Automatically read the collected verses when the view appears
+            if !isMuted {
+                collectedVerses.forEach { speakText($0, isMuted: isMuted) }
+            }
             AudioManager.shared.setVolume(to: 0.2, duration: 1.0) // Smoothly lower volume to 20%
         }
         .onDisappear {
