@@ -148,6 +148,8 @@ struct SettingsButton: View {
     @Binding var showSettingsMenu: Bool // Binding to control the visibility of the settings menu.
     let horizontalSizeClass: UserInterfaceSizeClass? // Detects the device type (iPhone or iPad).
 
+    @State private var animateGear = false // State to control gear animation.
+
     var body: some View {
         VStack {
             Spacer() // Pushes the button to the bottom.
@@ -155,6 +157,7 @@ struct SettingsButton: View {
                 Spacer() // Pushes the button to the right.
                 Button(action: {
                     withAnimation {
+                        animateGear = true // Trigger the gear animation.
                         showSettingsMenu.toggle() // Toggles the visibility of the settings menu.
                     }
                 }) {
@@ -165,9 +168,46 @@ struct SettingsButton: View {
                         .background(Color.white.opacity(0.8)) // Semi-transparent white background.
                         .clipShape(Circle()) // Circular shape for the button.
                         .shadow(color: .gray, radius: 4, x: 2, y: 2) // Adds a shadow effect.
+                        .modifier(WiggleEffectModifier(animate: animateGear)) // Apply wiggle animation conditionally.
                 }
                 .padding() // Adds padding around the button.
+                .onChange(of: animateGear) { _, newValue in
+                    // Reset animation state after it runs once.
+                    if newValue {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            animateGear = false
+                        }
+                    }
+                }
             }
+        }
+    }
+}
+
+/// A custom view modifier to apply the wiggle animation conditionally.
+struct WiggleEffectModifier: ViewModifier {
+    let animate: Bool
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *), animate {
+            content.symbolEffect(.wiggle) // Apply wiggle animation on iOS 17 or later.
+        } else {
+            content // Return the original content for earlier iOS versions.
+        }
+    }
+}
+
+extension View {
+    /// Applies a modifier conditionally.
+    /// - Parameters:
+    ///   - condition: The condition to evaluate.
+    ///   - transform: The modifier to apply if the condition is true.
+    /// - Returns: The modified view if the condition is true, otherwise the original view.
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            return AnyView(transform(self))
+        } else {
+            return AnyView(self) // Return the original view if the condition is false.
         }
     }
 }
@@ -189,30 +229,48 @@ struct SettingsMenu: View {
 
             // Settings menu content.
             VStack(spacing: 20) {
-                Text("Settings") // Title of the settings menu.
+                Text("Configuración") // Title of the settings menu.
                     .font(.headline)
                     .foregroundColor(.white)
 
                 // Toggle button to mute/unmute the soundtrack.
-                ToggleButton(label: isSoundtrackMuted ? "Unmute Soundtrack" : "Mute Soundtrack") {
+                Button(action: {
                     isSoundtrackMuted.toggle() // Toggle the soundtrack mute state.
                     if isSoundtrackMuted {
                         AudioManager.shared.pauseSoundtrack() // Pause the soundtrack.
                     } else {
                         AudioManager.shared.playSoundtrack() // Resume the soundtrack.
                     }
+                }) {
+                    HStack {
+                        Image(systemName: isSoundtrackMuted ? "speaker.slash.circle.fill" : "speaker.wave.2.circle.fill")
+                            .font(.system(size: 30)) // Icon size
+                            .foregroundColor(.white) // Icon color
+                        Text("Música: \(isSoundtrackMuted ? "Apagada" : "Encendida")") // Description in Spanish
+                            .foregroundColor(.white)
+                            .font(.subheadline)
+                    }
                 }
 
                 // Toggle button to mute/unmute the voice narration.
-                ToggleButton(label: isMuted ? "Unmute Voice" : "Mute Voice") {
+                Button(action: {
                     isMuted.toggle() // Toggle the voice mute state.
+                }) {
+                    HStack {
+                        Image(systemName: isMuted ? "speaker.slash.circle.fill" : "speaker.wave.2.circle.fill")
+                            .font(.system(size: 30)) // Icon size
+                            .foregroundColor(.white) // Icon color
+                        Text("Voz: \(isMuted ? "Apagada" : "Encendida")") // Description in Spanish
+                            .foregroundColor(.white)
+                            .font(.subheadline)
+                    }
                 }
 
                 // Button to close the settings menu.
                 Button(action: {
                     showSettingsMenu = false // Close the settings menu.
                 }) {
-                    Text("Close") // Button label.
+                    Text("Cerrar") // Button label in Spanish.
                         .foregroundColor(.white)
                         .padding()
                         .background(Color.red.opacity(0.8)) // Red background for the button.
@@ -254,52 +312,78 @@ struct BackgroundView: View {
     }
 }
 
-// MARK: - Game Board View
-
-/// Displays the game board with spaces, dice, and collected verses.
 struct GameBoardView: View {
-    // MARK: - Properties
+    let horizontalSizeClass: UserInterfaceSizeClass?
+    @Binding var isMuted: Bool // Binding to control audio muting
+    @Binding var isSoundtrackMuted: Bool // Binding to control soundtrack muting
 
-    let horizontalSizeClass: UserInterfaceSizeClass? // Detects the device type (iPhone or iPad).
-    @Binding var isMuted: Bool // Binding to control audio muting.
-    @Binding var isSoundtrackMuted: Bool // Binding to control soundtrack muting.
-
-    @State private var showSettingsMenu = false // Controls the settings menu.
+    @State private var showSettingsMenu = false // Controls the settings menu
 
     // MARK: - Layout Constants
-
-    let rows = 6 // Number of rows on the game board.
-    let columns = 8 // Number of columns on the game board.
-
+    let rows = 6
+    let columns = 8
+    
     // MARK: - Verse Spaces
-
     let verseSpaces: [Int: String] = [
         1: "Estas al inicio formado",
         4: "Los dados ruedan y escapan a tu mano",
-        // ...existing verses...
+        7: "Avanzas sin ningún atraso",
+        10: "Entre casillas buscas el atajo",
+        13: "No ves los dientes del engaño",
+        15: "Y la boca de serpiente te lleva hacia abajo",
+        18: "Se acerca mordiendo el fracaso",
+        22: "Ganar parece algo lejano",
+        25: "Tiras dados, que siga el relajo",
+        28: "Atrás medio tablero ha quedado",
+        31: "Entre risas pegas brincos y saltos",
+        34: "Subes la escalera, peldaño a peldaño",
+        37: "A la meta estás más cercano",
+        40: "Avanzas, cuidando cada paso",
+        43: "Escalas hasta lo más alto",
         46: "En la meta estás, has ganado"
     ]
-    let totalSpaces: Int // Total number of spaces on the board.
-
+    let totalSpaces: Int
+    
     // MARK: - State Properties
-
-    @State private var playerPosition = 0 // Start position of the player.
-    @State private var collectedVerses: [String] = [] // List of collected verses.
-    @State private var showDetailView = false // Controls the detailed view.
-    @State private var showEndGameView = false // Controls the end-game view.
-
-    // MARK: - Initializer
-
-    /// Initializes the game board view with bindings and layout properties.
+    @State private var playerPosition = 0 // Start position of the player
+    @State private var collectedVerses: [String] = [] // List of collected verses
+    @State private var showDetailView = false // Controls the detailed view
+    @State private var showEndGameView = false // Controls the end-game view
+    @State private var isVoiceMuted = false // Mute state for voice
+    
+    @AppStorage("playerPosition") private var savedPlayerPosition = 0
+    @AppStorage("collectedVerses") private var savedCollectedVerses = ""
+    
+    @Namespace private var animationNamespace
+    
+    @State private var currentDiceImage = "noDice" // Default dice image before any roll
+    @State private var isRolling = false // Prevent multiple rolls at the same time
+    @State private var hasRolledDice = false // Track if the dice has been rolled
+    
+    // MARK: - Background Soundtrack
+    private var soundtrackPlayer: AVAudioPlayer? = {
+        guard let url = Bundle.main.url(forResource: "Jungle Trip - Quincas Moreira", withExtension: "mp3") else { return nil }
+        return try? AVAudioPlayer(contentsOf: url)
+    }()
+    
+    // Explicit initializer for @Binding property
     init(isMuted: Binding<Bool>, horizontalSizeClass: UserInterfaceSizeClass?, isSoundtrackMuted: Binding<Bool>) {
         self._isMuted = isMuted
-        self.horizontalSizeClass = horizontalSizeClass
+        self.horizontalSizeClass = horizontalSizeClass // Initialize the property
         self._isSoundtrackMuted = isSoundtrackMuted
         totalSpaces = rows * columns
+        playerPosition = savedPlayerPosition
+        collectedVerses = savedCollectedVerses.isEmpty ? [] : savedCollectedVerses.components(separatedBy: "|")
     }
-
-    // MARK: - Body
-
+    
+    private func resetGame() {
+        playerPosition = 0
+        collectedVerses = []
+        saveGameState()
+        showEndGameView = false
+        showDetailView = false
+    }
+    
     var body: some View {
         ZStack {
             Image(horizontalSizeClass == .compact ? "background-iphone" : "background-ipad")
