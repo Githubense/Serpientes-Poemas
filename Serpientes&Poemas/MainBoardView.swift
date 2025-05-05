@@ -7,7 +7,7 @@ struct MainBoardView: View {
     
     var body: some View {
         ZStack {
-            Image("background2")
+            Image("mainScreen-ipad")
                 .resizable()
                 .ignoresSafeArea()
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
@@ -100,6 +100,11 @@ struct GameBoardView: View {
 
     @Namespace private var animationNamespace
 
+    @State private var currentDiceImage = "noDice" // Default dice image before any roll
+    @State private var isRolling = false // Prevent multiple rolls at the same time
+    @State private var hasRolledDice = false // Track if the dice has been rolled
+    @State private var isBreathing = false // Control the breathing animation
+
     init() {
         totalSpaces = rows * columns
         playerPosition = savedPlayerPosition
@@ -115,7 +120,7 @@ struct GameBoardView: View {
     }
     var body: some View {
         ZStack {
-            Color.teal.ignoresSafeArea()
+            Image("background-ipad").resizable().ignoresSafeArea()
             
             VStack {
                 Spacer()
@@ -129,9 +134,11 @@ struct GameBoardView: View {
                     VStack(spacing: 20) {
                         collectedVersesView
                         diceButton
+                        /*
                         Text("Posición actual: \(playerPosition)")
                             .font(.headline)
                             .foregroundColor(.white)
+                        */
                         Button(action: {
                             withAnimation(.easeInOut(duration: 0.5)) {
                                 showDetailView = true
@@ -177,15 +184,8 @@ struct GameBoardView: View {
                             let position = calculatePosition(row: row, column: column)
                             ZStack {
                                 // Use specific images for the first and last spaces
-                                if position == 0 {
-                                    Image("start") // Image for the first space
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: cellWidth, height: cellWidth)
-                                        .cornerRadius(10) // Add rounded corners
-                                        .clipped()
-                                } else if position == totalSpaces - 1 {
-                                    Image("end") // Image for the last space
+                                if position == 0 || position == totalSpaces - 1 {
+                                    Image("blankSpace") // Image for the first space
                                         .resizable()
                                         .scaledToFill()
                                         .frame(width: cellWidth, height: cellWidth)
@@ -221,8 +221,14 @@ struct GameBoardView: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle()) // Make the entire grid tappable
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    showDetailView = true
+                }
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     private var collectedVersesView: some View {
@@ -249,20 +255,40 @@ struct GameBoardView: View {
     
     private var diceButton: some View {
         Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.5, blendDuration: 0)) {
-                rollDice()
-            }
+            rollDiceWithAnimation()
         }) {
-            Text("🎲")
-                .font(.largeTitle)
-                .padding()
-                .background(Color.yellow)
+            Image(currentDiceImage)
+                .resizable()
+                .frame(width: 150, height: 150) // Size of the dice button
                 .cornerRadius(15)
-                .scaleEffect(1.1) // Slightly larger button
                 .shadow(color: .gray, radius: 4, x: 2, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
-        .scaleEffect(1.0) // Reset scale after animation
+    }
+
+    // MARK: - Dice Roll Animation Logic
+    private func rollDiceWithAnimation() {
+        guard !isRolling else { return } // Prevent multiple rolls
+        isRolling = true
+
+        let diceRoll = Int.random(in: 1...6) // Final dice result
+        var currentRoll = 1 // Start from dice1
+        let animationDuration: TimeInterval = 1.0 // Total animation duration in seconds
+        let interval: TimeInterval = 0.1 // Interval between dice image updates
+        var elapsedTime: TimeInterval = 0 // Track elapsed time
+
+        Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { timer in
+            elapsedTime += interval // Increment elapsed time
+            currentDiceImage = "dice\(currentRoll)" // Update dice image
+            currentRoll = currentRoll % 6 + 1 // Cycle through dice1 to dice6
+
+            if elapsedTime >= animationDuration {
+                timer.invalidate() // Stop the timer after the animation duration
+                currentDiceImage = "dice\(diceRoll)" // Set the final dice result
+                isRolling = false // Allow new rolls
+                movePlayer(to: min(playerPosition + diceRoll, totalSpaces - 1)) // Move the player
+            }
+        }
     }
     
     // MARK: - Dice Roll Logic
@@ -345,7 +371,7 @@ struct DetailView: View {
     
     var body: some View {
         ZStack {
-            Image("background2") // Background image
+            Image("background-ipad") // Background image
                 .resizable()
                 .ignoresSafeArea()
             
