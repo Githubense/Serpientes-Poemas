@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "mainscreen-iphone.png",
       "idiom" : "universal",
       "scale" : "1x"
     },

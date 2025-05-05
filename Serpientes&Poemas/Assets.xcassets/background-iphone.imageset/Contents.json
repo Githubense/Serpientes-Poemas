@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "background-iphone.png",
       "idiom" : "universal",
       "scale" : "1x"
     },

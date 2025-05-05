@@ -5,10 +5,12 @@ import AVFoundation
 struct MainBoardView: View {
     @State private var showGameBoard = false
     @State private var isMuted = false // State to control audio muting
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass // Detect device type
     
     var body: some View {
         ZStack {
-            Image("mainScreen-ipad")
+            // Dynamically load the background image based on the device type
+            Image(horizontalSizeClass == .compact ? "mainScreen-iphone" : "mainScreen-ipad")
                 .resizable()
                 .ignoresSafeArea()
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
@@ -20,23 +22,22 @@ struct MainBoardView: View {
             }
             .ignoresSafeArea()
             
-            VStack() {
+            VStack {
                 Text("Serpientes")
                     .font(Font.custom("BagelFatOne-Regular", size: 60))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.lightGreen)
                     .padding(.bottom, -10)
-                    .padding(.top, 0)
                 Text("&")
                     .font(Font.custom("ChelseaMarket-Regular", size: 30))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.lightGreen)
-                    .padding(.vertical,-10)
+                    .padding(.vertical, -10)
                 Text("Poemas")
                     .font(Font.custom("FleurDeLeah-Regular", size: 80))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.lightGreen)
-                    .padding(.top,-20)
+                    .padding(.top, -20)
                     .padding(.bottom, 30)
                 
                 Button(action: {
@@ -69,7 +70,7 @@ struct MainBoardView: View {
             }
         }
         .fullScreenCover(isPresented: $showGameBoard) {
-            GameBoardView(isMuted: $isMuted)
+            GameBoardView(isMuted: $isMuted, horizontalSizeClass: horizontalSizeClass)
                 .transition(.scale(scale: 0.8, anchor: .center)) // Scale transition
         }
     }
@@ -107,10 +108,12 @@ struct GameBoardView: View {
     @State private var isBreathing = false // Control the breathing animation
 
     @Binding var isMuted: Bool // Binding to control audio muting
+    let horizontalSizeClass: UserInterfaceSizeClass? // Add this parameter
 
     // Explicit initializer for @Binding property
-    init(isMuted: Binding<Bool>) {
+    init(isMuted: Binding<Bool>, horizontalSizeClass: UserInterfaceSizeClass?) {
         self._isMuted = isMuted
+        self.horizontalSizeClass = horizontalSizeClass // Initialize the property
         totalSpaces = rows * columns
         playerPosition = savedPlayerPosition
         collectedVerses = savedCollectedVerses.isEmpty ? [] : savedCollectedVerses.components(separatedBy: "|")
@@ -125,7 +128,9 @@ struct GameBoardView: View {
     }
     var body: some View {
         ZStack {
-            Image("background-ipad").resizable().ignoresSafeArea()
+            Image(horizontalSizeClass == .compact ? "background-iphone" : "background-ipad")
+                .resizable()
+                .ignoresSafeArea()
             
             VStack {
                 Spacer()
@@ -139,32 +144,16 @@ struct GameBoardView: View {
                     VStack(spacing: 20) {
                         collectedVersesView
                         diceButton
-                        /*
-                        Text("Posición actual: \(playerPosition)")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        */
-
-
+                        
                         Button(action: {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.5, blendDuration: 0)) {
                                 isMuted.toggle()
                             }
                         }) {
                             Image(systemName: isMuted ? "speaker.slash.circle.fill" : "speaker.wave.2.circle.fill")
-                                .font(.system(size: 40)) // Adjust size as needed
-                                .symbolRenderingMode(.hierarchical) // Use hierarchical rendering
-                                .foregroundColor(isMuted ? .red : .green) // Color based on state
-                        }
-                        .onTapGesture {
-                            if #available(iOS 17.0, *) {
-                                // Add bounce animation only when tapped
-                                withAnimation {
-                                    isMuted.toggle()
-                                }
-                            } else {
-                                isMuted.toggle() // Fallback for older iOS versions
-                            }
+                                .font(.system(size: horizontalSizeClass == .compact ? 30 : 40)) // Adjust size dynamically
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundColor(isMuted ? .red : .green)
                         }
                     }
                     .frame(width: 200)
@@ -182,11 +171,16 @@ struct GameBoardView: View {
                     }
                 })
             } else {
-                DetailView(position: playerPosition, verse: verseSpaces[playerPosition], totalSpaces: totalSpaces, dismissAction: {
-                    withAnimation(.easeInOut(duration: 0.5)) {
-                        showDetailView = false
-                    }
-                }, isMuted: $isMuted)
+                DetailView(position: playerPosition, 
+                           verse: verseSpaces[playerPosition], 
+                           totalSpaces: totalSpaces, 
+                           dismissAction: {
+                               withAnimation(.easeInOut(duration: 0.5)) {
+                                   showDetailView = false
+                               }
+                           }, 
+                           isMuted: $isMuted, 
+                           horizontalSizeClass: horizontalSizeClass) // Pass horizontalSizeClass
                 .matchedGeometryEffect(id: "detailView", in: animationNamespace)
             }
         }
@@ -219,27 +213,31 @@ struct GameBoardView: View {
                                         .frame(width: cellWidth, height: cellWidth)
                                         .cornerRadius(10) // Add rounded corners
                                         .clipped()
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color.lightDarkGreen, lineWidth: 5)
-                                        )
+//                                        .overlay(
+//                                            RoundedRectangle(cornerRadius: 10)
+//                                                .stroke(Color.lightDarkGreen, lineWidth: 5)
+//                                        )
                                 }
                                 
                                 // Highlight the player's current position
                                 if position == playerPosition {
                                     Rectangle()
-                                        .fill(Color.red.opacity(0.6))
-                                        .frame(width: cellWidth / 2, height: cellWidth / 2)
-                                        .cornerRadius(4)
+                                        .foregroundColor(.clear)
+                                        .frame(width: horizontalSizeClass == .compact ? cellWidth / 2 : cellWidth / 1.5, 
+                                               height: horizontalSizeClass == .compact ? cellWidth / 2 : cellWidth / 1.5) // Smaller for iPhone
+                                        .background(Color(red: 0.69, green: 0.16, blue: 0.19))
+                                        .cornerRadius(20)
+                                        .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 4)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .inset(by: 2)
+                                                .stroke(Color(red: 0.66, green: 0.22, blue: 0), lineWidth: 4)
+                                        )
+                                        .rotationEffect(Angle(degrees: -90))
                                         .matchedGeometryEffect(id: "playerPosition", in: animationNamespace)
                                 }
                                 
-                                // Show an icon if the position contains a verse
-                                if verseSpaces[position] != nil {
-                                    Text("📜")
-                                        .font(.caption)
-                                        .foregroundColor(.white)
-                                }
+
                             }
                         }
                     }
@@ -283,7 +281,8 @@ struct GameBoardView: View {
         }) {
             Image(currentDiceImage)
                 .resizable()
-                .frame(width: 150, height: 150) // Size of the dice button
+                .frame(width: horizontalSizeClass == .compact ? 100 : 150, 
+                       height: horizontalSizeClass == .compact ? 100 : 150) // Smaller for iPhone
                 .cornerRadius(15)
                 .shadow(color: .gray, radius: 4, x: 2, y: 2)
         }
@@ -390,48 +389,39 @@ struct DetailView: View {
     let verse: String?
     let totalSpaces: Int
     let dismissAction: () -> Void
-    
-    @Namespace private var animationNamespace // Add this if not already present
     @Binding var isMuted: Bool // Binding to control audio muting
-    
+    let horizontalSizeClass: UserInterfaceSizeClass? // Add this parameter
+
     var body: some View {
         ZStack {
-            Image("background-ipad") // Background image
-                .resizable()
-                .ignoresSafeArea()
             
+            Color.black.ignoresSafeArea()
+            // Blurred background of the GameBoardView
+            GameBoardView(isMuted: $isMuted, horizontalSizeClass: horizontalSizeClass)
+                .blur(radius: 25) // Apply blur effect
+            
+            // Foreground content of the DetailView
             VStack(spacing: 20) {
-                // Use specific images for the first and last spaces
-                if position == 0 {
-                    Image("start") // Image for the first space
+                if position == 0 || position == totalSpaces - 1 {
+                    Image("blankSpace") // Image for the first space
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 200, height: 200)
+                        .frame(width: horizontalSizeClass == .compact ? 150 : 200, 
+                               height: horizontalSizeClass == .compact ? 150 : 200) // Adjust size dynamically
                         .cornerRadius(15)
                         .shadow(color: .gray, radius: 4, x: 2, y: 2)
-                        .matchedGeometryEffect(id: "playerPosition", in: animationNamespace)
-                } else if position == totalSpaces - 1 {
-                    Image("end") // Image for the last space
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 200, height: 200)
-                        .cornerRadius(15)
-                        .shadow(color: .gray, radius: 4, x: 2, y: 2)
-                        .matchedGeometryEffect(id: "playerPosition", in: animationNamespace)
                 } else {
-                    // Display the image for the current position or fallback to default
                     Image(UIImage(named: String(format: "%02d", position)) != nil ? String(format: "%02d", position) : "default_space")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 200, height: 200)
+                        .frame(width: horizontalSizeClass == .compact ? 150 : 200, 
+                               height: horizontalSizeClass == .compact ? 150 : 200) // Adjust size dynamically
                         .cornerRadius(15)
                         .shadow(color: .gray, radius: 4, x: 2, y: 2)
-                        .matchedGeometryEffect(id: "playerPosition", in: animationNamespace)
                 }
                 
-                // Correct the position display to match the GameBoardView
-                Text("Posición: \(position)") // Add +1 to match the 1-based index
-                    .font(.largeTitle)
+                Text("Posición: \(position)")
+                    .font(.system(size: horizontalSizeClass == .compact ? 20 : 30)) // Adjust font size dynamically
                     .foregroundColor(.green)
                 
                 if let verse = verse {
@@ -446,11 +436,9 @@ struct DetailView: View {
                         .background(Color.teal.opacity(0.8))
                         .cornerRadius(10)
                         .onAppear {
-                            // Speak the verse
                             if !isMuted {
                                 speakText(verse)
                             }
-                            // Dismiss the view after the verse is read
                             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                 dismissAction()
                             }
@@ -463,7 +451,6 @@ struct DetailView: View {
                         .background(Color.teal.opacity(0.8))
                         .cornerRadius(10)
                         .onAppear {
-                            // Dismiss the view after a short delay
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                                 dismissAction()
                             }
@@ -478,10 +465,12 @@ struct DetailView: View {
 struct EndGameView: View {
     let collectedVerses: [String]
     let dismissAction: () -> Void
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass // Detect device type
 
     var body: some View {
         ZStack {
-            Image("background")
+            // Dynamically load the background image based on the device type
+            Image(horizontalSizeClass == .compact ? "background-iphone" : "background-ipad")
                 .resizable()
                 .ignoresSafeArea()
             
