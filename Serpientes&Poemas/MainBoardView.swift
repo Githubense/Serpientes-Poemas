@@ -144,23 +144,27 @@ struct GameBoardView: View {
                             .font(.headline)
                             .foregroundColor(.white)
                         */
+
+
                         Button(action: {
-                            withAnimation(.easeInOut(duration: 0.5)) {
-                                showDetailView = true
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.5, blendDuration: 0)) {
+                                isMuted.toggle()
                             }
                         }) {
-                            Text("Show Detail")
+                            Image(systemName: isMuted ? "speaker.slash.circle.fill" : "speaker.wave.2.circle.fill")
+                                .font(.system(size: 40)) // Adjust size as needed
+                                .symbolRenderingMode(.hierarchical) // Use hierarchical rendering
+                                .foregroundColor(isMuted ? .red : .green) // Color based on state
                         }
-                        
-                        Button(action: {
-                            isMuted.toggle()
-                        }) {
-                            Text(isMuted ? "Unmute" : "Mute")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.teal)
-                                .cornerRadius(10)
+                        .onTapGesture {
+                            if #available(iOS 17.0, *) {
+                                // Add bounce animation only when tapped
+                                withAnimation {
+                                    isMuted.toggle()
+                                }
+                            } else {
+                                isMuted.toggle() // Fallback for older iOS versions
+                            }
                         }
                     }
                     .frame(width: 200)
@@ -207,7 +211,6 @@ struct GameBoardView: View {
                                         .frame(width: cellWidth, height: cellWidth)
                                         .cornerRadius(10) // Add rounded corners
                                         .clipped()
-
                                 } else {
                                     // Display the image for the current position or fallback to default
                                     Image(UIImage(named: String(format: "%02d", position)) != nil ? String(format: "%02d", position) : "default_space")
@@ -557,7 +560,7 @@ func createSnow() -> VortexSystem {
 func speakText(_ text: String) {
     let synthesizer = AVSpeechSynthesizer()
     let utterance = AVSpeechUtterance(string: text)
-    utterance.voice = AVSpeechSynthesisVoice(language: "en-US") // Adjust language as needed
+    utterance.voice = AVSpeechSynthesisVoice(language: "es-MX") // Set to Spanish (Mexico)
     synthesizer.speak(utterance)
 }
 
