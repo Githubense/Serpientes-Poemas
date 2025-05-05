@@ -45,12 +45,15 @@ Here’s a preview of the first 5 spaces on the board:
 ## Assets & Copyrights 📜
 
 ### Fonts
-- **Notable-Regular.ttf**
-- **ChelseaMarket-Regular.ttf**
-- **FleurDeLeah-Regular.ttf**
-- **BagelFatOne-Regular.ttf**
 
-All fonts are open-source and used under their respective licenses.
+- **ChelseaMarket-Regular.ttf**  
+  Licensed under the SIL Open Font License (OFL). [Learn More](https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL)
+
+- **FleurDeLeah-Regular.ttf**  
+  Free for personal use. Commercial use may require a license. [Learn More](https://www.fontspace.com/fleur-de-leah-font-f14179)
+
+- **BagelFatOne-Regular.ttf**  
+  Licensed under the SIL Open Font License (OFL). [Learn More](https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL)
 
 ### Music
 - **"Jungle Trip" by Quincas Moreira**  
