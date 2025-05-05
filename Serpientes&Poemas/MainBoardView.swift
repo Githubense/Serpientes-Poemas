@@ -33,8 +33,8 @@ struct MainBoardView: View {
 
             // Main content: Title and Start Button.
             VStack {
-                TitleView()
-                StartButton(showGameBoard: $showGameBoard)
+                TitleView() // Displays the title of the game.
+                StartButton(showGameBoard: $showGameBoard) // Displays the "Start Game" button.
             }
 
             // Settings button in the lower-right corner.
@@ -83,91 +83,91 @@ struct MainBoardView: View {
 
 // MARK: - Subviews
 
-/// Displays the title of the game.
+/// Displays the title of the game with custom fonts and colors.
 struct TitleView: View {
     var body: some View {
         VStack {
-            Text("Serpientes")
-                .font(Font.custom("BagelFatOne-Regular", size: 60))
-                .foregroundColor(.lightGreen)
-                .padding(.bottom, -10)
-            Text("&")
-                .font(Font.custom("ChelseaMarket-Regular", size: 30))
-                .foregroundColor(.lightGreen)
-                .padding(.vertical, -10)
-            Text("Poemas")
-                .font(Font.custom("FleurDeLeah-Regular", size: 80))
-                .foregroundColor(.lightGreen)
-                .padding(.top, -20)
-                .padding(.bottom, 30)
+            Text("Serpientes") // Displays the first part of the title.
+                .font(Font.custom("BagelFatOne-Regular", size: 60)) // Custom font for the title.
+                .foregroundColor(.lightGreen) // Light green color for the text.
+                .padding(.bottom, -10) // Adjusts spacing between text elements.
+            Text("&") // Displays the ampersand.
+                .font(Font.custom("ChelseaMarket-Regular", size: 30)) // Custom font for the ampersand.
+                .foregroundColor(.lightGreen) // Light green color for the text.
+                .padding(.vertical, -10) // Adjusts vertical spacing.
+            Text("Poemas") // Displays the second part of the title.
+                .font(Font.custom("FleurDeLeah-Regular", size: 80)) // Custom font for the title.
+                .foregroundColor(.lightGreen) // Light green color for the text.
+                .padding(.top, -20) // Adjusts spacing above the text.
+                .padding(.bottom, 30) // Adjusts spacing below the text.
         }
     }
 }
 
-/// Displays the "Start Game" button.
+/// Displays the "Start Game" button with animations and custom styling.
 struct StartButton: View {
-    @Binding var showGameBoard: Bool
+    @Binding var showGameBoard: Bool // Binding to control the visibility of the game board.
 
     var body: some View {
         Button(action: {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                showGameBoard = true
+                showGameBoard = true // Triggers the game board to appear.
             }
         }) {
-            Text("Empezar")
-                .font(Font.custom("ChelseaMarket-Regular", size: 25))
-                .bold()
-                .padding()
-                .frame(width: 202, height: 79)
+            Text("Empezar") // Button label.
+                .font(Font.custom("ChelseaMarket-Regular", size: 25)) // Custom font for the button text.
+                .bold() // Makes the text bold.
+                .padding() // Adds padding around the text.
+                .frame(width: 202, height: 79) // Sets the button's size.
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color(red: 0.51, green: 0.83, blue: 0.51))
+                    RoundedRectangle(cornerRadius: 20) // Rounded rectangle background.
+                        .fill(Color(red: 0.51, green: 0.83, blue: 0.51)) // Green fill color.
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color(red: 0.31, green: 0.75, blue: 0.55), lineWidth: 7)
+                            RoundedRectangle(cornerRadius: 20) // Border overlay.
+                                .stroke(Color(red: 0.31, green: 0.75, blue: 0.55), lineWidth: 7) // Green border.
                         )
                 )
-                .foregroundColor(.white)
-                .shadow(color: .gray, radius: 4, x: 2, y: 2)
+                .foregroundColor(.white) // White text color.
+                .shadow(color: .gray, radius: 4, x: 2, y: 2) // Adds a shadow effect.
         }
-        .padding(.bottom, -20)
+        .padding(.bottom, -20) // Adjusts spacing below the button.
     }
 }
 
-/// Displays the settings button in the lower-right corner.
+/// Displays the settings button in the lower-right corner with animations and styling.
 struct SettingsButton: View {
-    @Binding var showSettingsMenu: Bool
-    let horizontalSizeClass: UserInterfaceSizeClass?
+    @Binding var showSettingsMenu: Bool // Binding to control the visibility of the settings menu.
+    let horizontalSizeClass: UserInterfaceSizeClass? // Detects the device type (iPhone or iPad).
 
     var body: some View {
         VStack {
-            Spacer()
+            Spacer() // Pushes the button to the bottom.
             HStack {
-                Spacer()
+                Spacer() // Pushes the button to the right.
                 Button(action: {
                     withAnimation {
-                        showSettingsMenu.toggle()
+                        showSettingsMenu.toggle() // Toggles the visibility of the settings menu.
                     }
                 }) {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: horizontalSizeClass == .compact ? 30 : 50))
-                        .foregroundColor(.gray)
-                        .padding()
-                        .background(Color.white.opacity(0.8))
-                        .clipShape(Circle())
-                        .shadow(color: .gray, radius: 4, x: 2, y: 2)
+                    Image(systemName: "gearshape.fill") // Gear icon for the button.
+                        .font(.system(size: horizontalSizeClass == .compact ? 30 : 50)) // Adjusts size based on device type.
+                        .foregroundColor(.gray) // Gray color for the icon.
+                        .padding() // Adds padding around the icon.
+                        .background(Color.white.opacity(0.8)) // Semi-transparent white background.
+                        .clipShape(Circle()) // Circular shape for the button.
+                        .shadow(color: .gray, radius: 4, x: 2, y: 2) // Adds a shadow effect.
                 }
-                .padding()
+                .padding() // Adds padding around the button.
             }
         }
     }
 }
 
-/// Displays the settings menu overlay.
+/// Displays the settings menu overlay with options to mute/unmute audio and close the menu.
 struct SettingsMenu: View {
-    @Binding var isMuted: Bool
-    @Binding var isSoundtrackMuted: Bool
-    @Binding var showSettingsMenu: Bool
+    @Binding var isMuted: Bool // Binding to control voice muting.
+    @Binding var isSoundtrackMuted: Bool // Binding to control soundtrack muting.
+    @Binding var showSettingsMenu: Bool // Binding to control the visibility of the settings menu.
 
     var body: some View {
         ZStack {
@@ -175,58 +175,61 @@ struct SettingsMenu: View {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
                 .onTapGesture {
-                    showSettingsMenu = false
+                    showSettingsMenu = false // Close the settings menu when the overlay is tapped.
                 }
 
             // Settings menu content.
             VStack(spacing: 20) {
-                Text("Settings")
+                Text("Settings") // Title of the settings menu.
                     .font(.headline)
                     .foregroundColor(.white)
 
+                // Toggle button to mute/unmute the soundtrack.
                 ToggleButton(label: isSoundtrackMuted ? "Unmute Soundtrack" : "Mute Soundtrack") {
-                    isSoundtrackMuted.toggle()
+                    isSoundtrackMuted.toggle() // Toggle the soundtrack mute state.
                     if isSoundtrackMuted {
-                        AudioManager.shared.pauseSoundtrack()
+                        AudioManager.shared.pauseSoundtrack() // Pause the soundtrack.
                     } else {
-                        AudioManager.shared.playSoundtrack()
+                        AudioManager.shared.playSoundtrack() // Resume the soundtrack.
                     }
                 }
 
+                // Toggle button to mute/unmute the voice narration.
                 ToggleButton(label: isMuted ? "Unmute Voice" : "Mute Voice") {
-                    isMuted.toggle()
+                    isMuted.toggle() // Toggle the voice mute state.
                 }
 
+                // Button to close the settings menu.
                 Button(action: {
-                    showSettingsMenu = false
+                    showSettingsMenu = false // Close the settings menu.
                 }) {
-                    Text("Close")
+                    Text("Close") // Button label.
                         .foregroundColor(.white)
                         .padding()
-                        .background(Color.red.opacity(0.8))
-                        .cornerRadius(10)
+                        .background(Color.red.opacity(0.8)) // Red background for the button.
+                        .cornerRadius(10) // Rounded corners for the button.
                 }
             }
             .padding()
-            .background(Color.black.opacity(0.9))
-            .cornerRadius(15)
-            .shadow(radius: 10)
+            .background(Color.black.opacity(0.9)) // Background color for the settings menu.
+            .cornerRadius(15) // Rounded corners for the settings menu.
+            .shadow(radius: 10) // Adds a shadow effect.
         }
     }
 }
 
-/// A reusable toggle button for settings.
+/// A reusable toggle button for settings with a label and an action.
 struct ToggleButton: View {
-    let label: String
-    let action: () -> Void
+    let label: String // The label displayed on the button.
+    let action: () -> Void // The action to perform when the button is tapped.
 
     var body: some View {
         Button(action: action) {
-            Text(label)
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.gray.opacity(0.8))
-                .cornerRadius(10)
+            Text(label) // Display the button label.
+                .foregroundColor(.white) // White text color.
+                .padding() // Adds padding around the text.
+                .background(Color.gray.opacity(0.8)) // Gray background for the button.
+                .cornerRadius(10) // Rounded corners for the button.
         }
     }
 }
@@ -666,74 +669,77 @@ struct GameBoardView: View {
     }
 }
 
+/// Displays detailed information about the current position on the board.
 struct DetailView: View {
-    let position: Int
-    let verse: String?
-    let totalSpaces: Int
-    let dismissAction: () -> Void
-    @Binding var isMuted: Bool // Binding to control audio muting
-    let horizontalSizeClass: UserInterfaceSizeClass?
+    let position: Int // The player's current position on the board.
+    let verse: String? // The verse associated with the current position, if any.
+    let totalSpaces: Int // The total number of spaces on the board.
+    let dismissAction: () -> Void // Action to dismiss the detail view.
+    @Binding var isMuted: Bool // Binding to control audio muting.
+    let horizontalSizeClass: UserInterfaceSizeClass? // Detects the device type (iPhone or iPad).
 
     var body: some View {
         ZStack {
-            // Dynamically load the background image based on the device type
+            // Dynamically load the background image based on the device type.
             Image(horizontalSizeClass == .compact ? "background-iphone" : "background-ipad")
                 .resizable()
                 .ignoresSafeArea()
                 .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
 
-
-            // Foreground content of the DetailView
+            // Foreground content of the DetailView.
             HStack(spacing: 20) {
-                // Left square for the position image
+                // Left square for the position image.
                 ZStack {
                     if position == 0 || position == totalSpaces - 1 {
-                        Image("blankSpace") // Image for the first or last space
+                        Image("blankSpace") // Image for the first or last space.
                             .resizable()
                             .scaledToFit()
-                            .cornerRadius(15)
-                            .shadow(color: .gray, radius: 4, x: 2, y: 2)
+                            .cornerRadius(15) // Rounded corners for the image.
+                            .shadow(color: .gray, radius: 4, x: 2, y: 2) // Adds a shadow effect.
                     } else {
                         Image(UIImage(named: String(format: "%02d", position)) != nil ? String(format: "%02d", position) : "default_space")
                             .resizable()
                             .scaledToFit()
-                            .cornerRadius(15)
-                            .shadow(color: .gray, radius: 4, x: 2, y: 2)
+                            .cornerRadius(15) // Rounded corners for the image.
+                            .shadow(color: .gray, radius: 4, x: 2, y: 2) // Adds a shadow effect.
                     }
                 }
                 .padding()
-                // Right text for the verse
+
+                // Right text for the verse.
                 VStack(alignment: .leading, spacing: 10) {
                     if let verse = verse {
-                        Text("Verso:")
+                        Text("Verso:") // Label for the verse.
                             .font(.headline)
                             .foregroundColor(.white)
-                        Text(verse)
+                        Text(verse) // Displays the verse text.
                             .font(.body)
                             .foregroundColor(.white)
                             .multilineTextAlignment(.leading)
                             .padding()
-                            .background(Color.teal.opacity(0.8))
-                            .cornerRadius(10)
+                            .background(Color.teal.opacity(0.8)) // Background color for the verse.
+                            .cornerRadius(10) // Rounded corners for the background.
                             .onAppear {
-                                // Lower soundtrack volume to 20%
+                                // Lower soundtrack volume to 20%.
                                 AudioManager.shared.setVolume(to: 0.2, duration: 1.0)
 
-                                // Speak the verse at full volume
+                                // Speak the verse at full volume.
                                 speakText(verse, isMuted: isMuted)
 
+                                // Automatically dismiss the view after 3 seconds.
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                     dismissAction()
                                 }
                             }
                     } else {
-                        Text("No hay verso aquí.")
+                        Text("No hay verso aquí.") // Message for empty spaces.
                             .font(.body)
                             .foregroundColor(.white)
                             .padding()
-                            .background(Color.teal.opacity(0.8))
-                            .cornerRadius(10)
+                            .background(Color.teal.opacity(0.8)) // Background color for the message.
+                            .cornerRadius(10) // Rounded corners for the background.
                             .onAppear {
+                                // Automatically dismiss the view after 1.5 seconds.
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                                     dismissAction()
                                 }
@@ -745,110 +751,118 @@ struct DetailView: View {
         }
         .onAppear {
             if !isMuted {
-                // Lower soundtrack volume to 20%
+                // Lower soundtrack volume to 20% when the view appears.
                 AudioManager.shared.setVolume(to: 0.2, duration: 1.0)
             }
         }
         .onDisappear {
             if !isMuted {
-                // Restore soundtrack volume to 50% when leaving
+                // Restore soundtrack volume to 50% when the view disappears.
                 AudioManager.shared.setVolume(to: 0.5, duration: 1.0)
             }
         }
     }
 }
 
+/// Displays the end-game screen with collected verses and a restart option.
 struct EndGameView: View {
-    let collectedVerses: [String]
-    let dismissAction: () -> Void
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @Binding var isMuted: Bool // Binding to control audio muting
+    let collectedVerses: [String] // List of verses collected during the game.
+    let dismissAction: () -> Void // Action to dismiss the end-game view.
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass // Detects the device type (iPhone or iPad).
+    @Binding var isMuted: Bool // Binding to control audio muting.
 
     var body: some View {
         ZStack {
-            // Dynamically load the background image based on the device type
+            // Dynamically load the background image based on the device type.
             Image(horizontalSizeClass == .compact ? "background-iphone" : "background-ipad")
                 .resizable()
                 .ignoresSafeArea()
-            
+
+            // Foreground content of the end-game view.
             VStack(spacing: 20) {
-                Text("¡Felicidades!")
+                Text("¡Felicidades!") // Congratulatory message.
                     .font(.largeTitle)
                     .foregroundColor(.green)
-                
+
                 Text("Has terminado el juego. Aquí están los versos que recogiste:")
                     .font(.headline)
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white)
-                
+
+                // Scrollable list of collected verses.
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
                         ForEach(collectedVerses, id: \.self) { verse in
-                            Text(verse)
+                            Text(verse) // Display each collected verse.
                                 .font(.body)
                                 .foregroundColor(.white)
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: 300)
+                .frame(maxWidth: .infinity, maxHeight: 300) // Limit the scroll view's size.
                 .padding()
-                .background(Color.teal.opacity(0.8))
-                .cornerRadius(10)
-                
+                .background(Color.teal.opacity(0.8)) // Background color for the scroll view.
+                .cornerRadius(10) // Rounded corners for the scroll view.
+
+                // Button to start a new game.
                 Button(action: {
-                    dismissAction() // Only dismiss the view
+                    dismissAction() // Trigger the dismiss action.
                 }) {
-                    Text("Nueva Partida")
+                    Text("Nueva Partida") // Button label.
                         .font(.headline)
                         .foregroundColor(.teal)
                         .padding()
-                        .background(Color.white)
-                        .cornerRadius(10)
-                        .shadow(color: .gray, radius: 4, x: 2, y: 2)
+                        .background(Color.white) // White background for the button.
+                        .cornerRadius(10) // Rounded corners for the button.
+                        .shadow(color: .gray, radius: 4, x: 2, y: 2) // Adds a shadow effect.
                 }
             }
             .padding()
         }
         .onAppear {
-            // Automatically read the collected verses when the view appears
+            // Automatically read the collected verses when the view appears.
             if !isMuted {
                 collectedVerses.forEach { speakText($0, isMuted: isMuted) }
             }
-            AudioManager.shared.setVolume(to: 0.2, duration: 1.0) // Smoothly lower volume to 20%
+            AudioManager.shared.setVolume(to: 0.2, duration: 1.0) // Smoothly lower volume to 20%.
         }
         .onDisappear {
-            AudioManager.shared.setVolume(to: 0.5, duration: 1.0) // Restore volume to 50% when leaving
+            AudioManager.shared.setVolume(to: 0.5, duration: 1.0) // Restore volume to 50% when leaving.
         }
     }
 }
 
+/// Creates a particle system for the background effect.
+/// - Returns: A configured `VortexSystem` for the snow effect.
 func createSnow() -> VortexSystem {
-    let system = VortexSystem(tags: ["leaf"])
-    system.birthRate = 1
-    system.position = [0.5, 0]
-    system.speed = 0.5
-    system.speedVariation = 0.5
-    system.lifespan = 3
-    system.shape = .box(width: 1, height: 0)
-    system.angle = .degrees(180)
-    system.angleRange = .degrees(0)
-    system.size = 0.01
-    system.sizeVariation = 0.1
-    system.angularSpeed = [0.5, 0.5, 0.5] // No rotation on any axis
-    system.angularSpeedVariation = [0, 0, 0] // No variation in rotation
-    
+    let system = VortexSystem(tags: ["leaf"]) // Tags for identifying the particle system.
+    system.birthRate = 1 // Number of particles generated per second.
+    system.position = [0.5, 0] // Starting position of the particles.
+    system.speed = 0.5 // Base speed of the particles.
+    system.speedVariation = 0.5 // Variation in particle speed.
+    system.lifespan = 3 // Lifespan of each particle in seconds.
+    system.shape = .box(width: 1, height: 0) // Shape of the particle emitter.
+    system.angle = .degrees(180) // Direction of particle emission.
+    system.angleRange = .degrees(0) // Range of angles for particle emission.
+    system.size = 0.01 // Base size of the particles.
+    system.sizeVariation = 0.1 // Variation in particle size.
+    system.angularSpeed = [0.5, 0.5, 0.5] // No rotation on any axis.
+    system.angularSpeedVariation = [0, 0, 0] // No variation in rotation.
+
     return system
 }
 
+/// Speaks the provided text using text-to-speech functionality.
+/// - Parameters:
+///   - text: The text to be spoken.
+///   - isMuted: A flag indicating whether the voice narration is muted.
 func speakText(_ text: String, isMuted: Bool) {
-    guard !isMuted else { return } // Do not speak if muted
-    let synthesizer = AudioManager.shared.speechSynthesizer
-    let utterance = AVSpeechUtterance(string: text)
-    utterance.voice = AVSpeechSynthesisVoice(language: "es-MX") // Set to Spanish (Mexico)
-    synthesizer.speak(utterance)
+    guard !isMuted else { return } // Do not speak if muted.
+    let synthesizer = AudioManager.shared.speechSynthesizer // Shared speech synthesizer instance.
+    let utterance = AVSpeechUtterance(string: text) // Create an utterance with the provided text.
+    utterance.voice = AVSpeechSynthesisVoice(language: "es-MX") // Set the voice to Spanish (Mexico).
+    synthesizer.speak(utterance) // Speak the utterance.
 }
-
-
 
 // MARK: - Preview
 struct MainBoardView_Previews: PreviewProvider {
