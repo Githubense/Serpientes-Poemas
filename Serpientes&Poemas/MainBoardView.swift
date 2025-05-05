@@ -4,6 +4,7 @@ import AVFoundation
 
 struct MainBoardView: View {
     @State private var showGameBoard = false
+    @State private var isMuted = false // State to control audio muting
     
     var body: some View {
         ZStack {
@@ -68,7 +69,7 @@ struct MainBoardView: View {
             }
         }
         .fullScreenCover(isPresented: $showGameBoard) {
-            GameBoardView()
+            GameBoardView(isMuted: $isMuted)
                 .transition(.scale(scale: 0.8, anchor: .center)) // Scale transition
         }
     }
@@ -105,7 +106,11 @@ struct GameBoardView: View {
     @State private var hasRolledDice = false // Track if the dice has been rolled
     @State private var isBreathing = false // Control the breathing animation
 
-    init() {
+    @Binding var isMuted: Bool // Binding to control audio muting
+
+    // Explicit initializer for @Binding property
+    init(isMuted: Binding<Bool>) {
+        self._isMuted = isMuted
         totalSpaces = rows * columns
         playerPosition = savedPlayerPosition
         collectedVerses = savedCollectedVerses.isEmpty ? [] : savedCollectedVerses.components(separatedBy: "|")
@@ -146,6 +151,17 @@ struct GameBoardView: View {
                         }) {
                             Text("Show Detail")
                         }
+                        
+                        Button(action: {
+                            isMuted.toggle()
+                        }) {
+                            Text(isMuted ? "Unmute" : "Mute")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.teal)
+                                .cornerRadius(10)
+                        }
                     }
                     .frame(width: 200)
                 }
@@ -166,7 +182,7 @@ struct GameBoardView: View {
                     withAnimation(.easeInOut(duration: 0.5)) {
                         showDetailView = false
                     }
-                })
+                }, isMuted: $isMuted)
                 .matchedGeometryEffect(id: "detailView", in: animationNamespace)
             }
         }
@@ -191,6 +207,7 @@ struct GameBoardView: View {
                                         .frame(width: cellWidth, height: cellWidth)
                                         .cornerRadius(10) // Add rounded corners
                                         .clipped()
+
                                 } else {
                                     // Display the image for the current position or fallback to default
                                     Image(UIImage(named: String(format: "%02d", position)) != nil ? String(format: "%02d", position) : "default_space")
@@ -199,6 +216,10 @@ struct GameBoardView: View {
                                         .frame(width: cellWidth, height: cellWidth)
                                         .cornerRadius(10) // Add rounded corners
                                         .clipped()
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(Color.lightDarkGreen, lineWidth: 5)
+                                        )
                                 }
                                 
                                 // Highlight the player's current position
@@ -368,6 +389,7 @@ struct DetailView: View {
     let dismissAction: () -> Void
     
     @Namespace private var animationNamespace // Add this if not already present
+    @Binding var isMuted: Bool // Binding to control audio muting
     
     var body: some View {
         ZStack {
@@ -422,7 +444,9 @@ struct DetailView: View {
                         .cornerRadius(10)
                         .onAppear {
                             // Speak the verse
-                            speakText(verse)
+                            if !isMuted {
+                                speakText(verse)
+                            }
                             // Dismiss the view after the verse is read
                             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                 dismissAction()
