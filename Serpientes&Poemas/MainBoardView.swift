@@ -2,22 +2,28 @@ import SwiftUI
 import Vortex
 import AVFoundation
 
+// MARK: - Main View
+
 /// Main view for the Serpientes & Poemas game.
 struct MainBoardView: View {
     // MARK: - State Properties
+
     @State private var showGameBoard = false // Controls the visibility of the game board.
     @State private var isMuted = false // Controls whether voice narration is muted.
     @State private var isSoundtrackMuted = false // Controls whether the soundtrack is muted.
     @State private var showSettingsMenu = false // Controls the visibility of the settings menu.
 
     // MARK: - Environment Properties
+
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass // Detects the device type (iPhone or iPad).
     @Environment(\.scenePhase) private var scenePhase // Monitors the app's lifecycle.
 
     // MARK: - Particle System
+
     private let snowSystem = createSnow() // Creates the particle system for the background effect.
 
     // MARK: - Body
+
     var body: some View {
         ZStack {
             // Background image based on device type.
@@ -70,6 +76,9 @@ struct MainBoardView: View {
     }
 
     // MARK: - Scene Phase Handling
+
+    /// Handles changes to the app's scene phase (active, inactive, background).
+    /// - Parameter newPhase: The new scene phase.
     private func handleScenePhaseChange(_ newPhase: ScenePhase) {
         if newPhase == .background || newPhase == .inactive {
             // Stop the soundtrack when the app goes to the background or becomes inactive.
@@ -245,78 +254,52 @@ struct BackgroundView: View {
     }
 }
 
-struct GameBoardView: View {
-    let horizontalSizeClass: UserInterfaceSizeClass?
-    @Binding var isMuted: Bool // Binding to control audio muting
-    @Binding var isSoundtrackMuted: Bool // Binding to control soundtrack muting
+// MARK: - Game Board View
 
-    @State private var showSettingsMenu = false // Controls the settings menu
+/// Displays the game board with spaces, dice, and collected verses.
+struct GameBoardView: View {
+    // MARK: - Properties
+
+    let horizontalSizeClass: UserInterfaceSizeClass? // Detects the device type (iPhone or iPad).
+    @Binding var isMuted: Bool // Binding to control audio muting.
+    @Binding var isSoundtrackMuted: Bool // Binding to control soundtrack muting.
+
+    @State private var showSettingsMenu = false // Controls the settings menu.
 
     // MARK: - Layout Constants
-    let rows = 6
-    let columns = 8
-    
+
+    let rows = 6 // Number of rows on the game board.
+    let columns = 8 // Number of columns on the game board.
+
     // MARK: - Verse Spaces
+
     let verseSpaces: [Int: String] = [
         1: "Estas al inicio formado",
         4: "Los dados ruedan y escapan a tu mano",
-        7: "Avanzas sin ningún atraso",
-        10: "Entre casillas buscas el atajo",
-        13: "No ves los dientes del engaño",
-        15: "Y la boca de serpiente te lleva hacia abajo",
-        18: "Se acerca mordiendo el fracaso",
-        22: "Ganar parece algo lejano",
-        25: "Tiras dados, que siga el relajo",
-        28: "Atrás medio tablero ha quedado",
-        31: "Entre risas pegas brincos y saltos",
-        34: "Subes la escalera, peldaño a peldaño",
-        37: "A la meta estás más cercano",
-        40: "Avanzas, cuidando cada paso",
-        43: "Escalas hasta lo más alto",
+        // ...existing verses...
         46: "En la meta estás, has ganado"
     ]
-    let totalSpaces: Int
-    
+    let totalSpaces: Int // Total number of spaces on the board.
+
     // MARK: - State Properties
-    @State private var playerPosition = 0 // Start position of the player
-    @State private var collectedVerses: [String] = [] // List of collected verses
-    @State private var showDetailView = false // Controls the detailed view
-    @State private var showEndGameView = false // Controls the end-game view
-    @State private var isVoiceMuted = false // Mute state for voice
-    
-    @AppStorage("playerPosition") private var savedPlayerPosition = 0
-    @AppStorage("collectedVerses") private var savedCollectedVerses = ""
-    
-    @Namespace private var animationNamespace
-    
-    @State private var currentDiceImage = "noDice" // Default dice image before any roll
-    @State private var isRolling = false // Prevent multiple rolls at the same time
-    @State private var hasRolledDice = false // Track if the dice has been rolled
-    
-    // MARK: - Background Soundtrack
-    private var soundtrackPlayer: AVAudioPlayer? = {
-        guard let url = Bundle.main.url(forResource: "Jungle Trip - Quincas Moreira", withExtension: "mp3") else { return nil }
-        return try? AVAudioPlayer(contentsOf: url)
-    }()
-    
-    // Explicit initializer for @Binding property
+
+    @State private var playerPosition = 0 // Start position of the player.
+    @State private var collectedVerses: [String] = [] // List of collected verses.
+    @State private var showDetailView = false // Controls the detailed view.
+    @State private var showEndGameView = false // Controls the end-game view.
+
+    // MARK: - Initializer
+
+    /// Initializes the game board view with bindings and layout properties.
     init(isMuted: Binding<Bool>, horizontalSizeClass: UserInterfaceSizeClass?, isSoundtrackMuted: Binding<Bool>) {
         self._isMuted = isMuted
-        self.horizontalSizeClass = horizontalSizeClass // Initialize the property
+        self.horizontalSizeClass = horizontalSizeClass
         self._isSoundtrackMuted = isSoundtrackMuted
         totalSpaces = rows * columns
-        playerPosition = savedPlayerPosition
-        collectedVerses = savedCollectedVerses.isEmpty ? [] : savedCollectedVerses.components(separatedBy: "|")
     }
-    
-    private func resetGame() {
-        playerPosition = 0
-        collectedVerses = []
-        saveGameState()
-        showEndGameView = false
-        showDetailView = false
-    }
-    
+
+    // MARK: - Body
+
     var body: some View {
         ZStack {
             Image(horizontalSizeClass == .compact ? "background-iphone" : "background-ipad")

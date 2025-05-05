@@ -1,6 +1,6 @@
 import AVFoundation
 
-/// Manages audio playback and speech synthesis for the game.
+/// Manages audio playback and speech synthesis for the game..
 class AudioManager {
     // MARK: - Singleton Instance
     static let shared = AudioManager() // Shared instance of the AudioManager.
@@ -10,6 +10,8 @@ class AudioManager {
     let speechSynthesizer = AVSpeechSynthesizer() // Synthesizer for text-to-speech functionality.
 
     // MARK: - Initialization
+
+    /// Initializes the AudioManager and loads the soundtrack.
     private init() {
         // Load the soundtrack from the app bundle.
         guard let url = Bundle.main.url(forResource: "Jungle Trip - Quincas Moreira", withExtension: "mp3") else { return }
