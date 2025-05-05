@@ -11,7 +11,7 @@ import SwiftUI
 struct Serpientes_PoemasApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainBoardView()
         }
     }
 }
