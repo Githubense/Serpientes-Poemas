@@ -2,186 +2,243 @@ import SwiftUI
 import Vortex
 import AVFoundation
 
+/// Main view for the Serpientes & Poemas game.
 struct MainBoardView: View {
-    @State private var showGameBoard = false
-    @State private var isMuted = false // State to control audio muting
-    @State private var isSoundtrackMuted = false // State to control soundtrack muting
-    @State private var showSettingsMenu = false // Controls the settings menu visibility
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass // Detect device type
-    @Environment(\.scenePhase) private var scenePhase // Monitor app lifecycle
+    // MARK: - State Properties
+    @State private var showGameBoard = false // Controls the visibility of the game board.
+    @State private var isMuted = false // Controls whether voice narration is muted.
+    @State private var isSoundtrackMuted = false // Controls whether the soundtrack is muted.
+    @State private var showSettingsMenu = false // Controls the visibility of the settings menu.
 
-    private let snowSystem = createSnow()
+    // MARK: - Environment Properties
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass // Detects the device type (iPhone or iPad).
+    @Environment(\.scenePhase) private var scenePhase // Monitors the app's lifecycle.
 
+    // MARK: - Particle System
+    private let snowSystem = createSnow() // Creates the particle system for the background effect.
+
+    // MARK: - Body
     var body: some View {
         ZStack {
-            // Dynamically load the background image based on the device type
-            Image(horizontalSizeClass == .compact ? "mainScreen-iphone" : "mainScreen-ipad")
-                .resizable()
-                .ignoresSafeArea()
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-            
+            // Background image based on device type.
+            BackgroundView(horizontalSizeClass: horizontalSizeClass)
+
+            // Particle system for visual effects.
             VortexView(snowSystem) {
                 Image("leaf")
                     .frame(width: 1)
                     .tag("leaf")
             }
             .ignoresSafeArea()
-            
+
+            // Main content: Title and Start Button.
             VStack {
-                Text("Serpientes")
-                    .font(Font.custom("BagelFatOne-Regular", size: 60))
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.lightGreen)
-                    .padding(.bottom, -10)
-                Text("&")
-                    .font(Font.custom("ChelseaMarket-Regular", size: 30))
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.lightGreen)
-                    .padding(.vertical, -10)
-                Text("Poemas")
-                    .font(Font.custom("FleurDeLeah-Regular", size: 80))
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.lightGreen)
-                    .padding(.top, -20)
-                    .padding(.bottom, 30)
-                
-                Button(action: {
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.6, blendDuration: 0)) {
-                        showGameBoard = true
-                    }
-                }) {
-                    Text("Empezar")
-                        .font(Font.custom("ChelseaMarket-Regular", size: 25))
-                        .bold()
-                        .padding()
-                        .frame(width: 202, height: 79)
-                        .background(
-                            Rectangle()
-                                .foregroundColor(.clear)
-                                .frame(width: 202, height: 79)
-                                .background(Color(red: 0.51, green: 0.83, blue: 0.51))
-                                .cornerRadius(20)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .inset(by: 3.5)
-                                        .stroke(Color(red: 0.31, green: 0.75, blue: 0.55), lineWidth: 7)
-                                )
-                        )
-                        .foregroundColor(.white)
-                        .cornerRadius(15)
-                        .shadow(color: .gray, radius: 4, x: 2, y: 2)
-                }
-                .padding(.bottom, -20)
+                TitleView()
+                StartButton(showGameBoard: $showGameBoard)
             }
-            
-            // Settings Button in the lower-right corner
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        withAnimation {
-                            showSettingsMenu.toggle()
-                        }
-                    }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: horizontalSizeClass == .compact ? 30 : 50)) // Smaller for iPhone, larger for iPad
-                            .foregroundColor(.gray)
-                            .padding()
-                            .background(Color.white.opacity(0.8))
-                            .clipShape(Circle())
-                            .shadow(color: .gray, radius: 4, x: 2, y: 2)
-                    }
-                    .padding()
-                }
-            }
-            
-            // Settings menu
+
+            // Settings button in the lower-right corner.
+            SettingsButton(showSettingsMenu: $showSettingsMenu, horizontalSizeClass: horizontalSizeClass)
+
+            // Settings menu overlay.
             if showSettingsMenu {
-                ZStack {
-                    // Semi-transparent overlay to block interaction with the background
-                    Color.black.opacity(0.5)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            // Close the settings menu if the overlay is tapped
-                            showSettingsMenu = false
-                        }
-
-                    // Settings menu content
-                    VStack(spacing: 20) {
-                        Text("Settings")
-                            .font(.headline)
-                            .foregroundColor(.white)
-
-                        Button(action: {
-                            isSoundtrackMuted.toggle()
-                            if isSoundtrackMuted {
-                                AudioManager.shared.pauseSoundtrack()
-                            } else {
-                                AudioManager.shared.playSoundtrack()
-                            }
-                        }) {
-                            Text(isSoundtrackMuted ? "Unmute Soundtrack" : "Mute Soundtrack")
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.gray.opacity(0.8))
-                                .cornerRadius(10)
-                        }
-
-                        Button(action: {
-                            isMuted.toggle()
-                        }) {
-                            Text(isMuted ? "Unmute Voice" : "Mute Voice")
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.gray.opacity(0.8))
-                                .cornerRadius(10)
-                        }
-
-                        Button(action: {
-                            showSettingsMenu = false
-                        }) {
-                            Text("Close")
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.red.opacity(0.8))
-                                .cornerRadius(10)
-                        }
-                    }
-                    .padding()
-                    .background(Color.black.opacity(0.9))
-                    .cornerRadius(15)
-                    .shadow(radius: 10)
-                }
+                SettingsMenu(isMuted: $isMuted, isSoundtrackMuted: $isSoundtrackMuted, showSettingsMenu: $showSettingsMenu)
             }
         }
         .onAppear {
-            // Start the soundtrack when the view appears
+            // Start the soundtrack when the view appears.
             if !isSoundtrackMuted {
-                DispatchQueue.main.async {
-                    AudioManager.shared.playSoundtrack()
-                }
+                AudioManager.shared.playSoundtrack()
             }
         }
         .onDisappear {
-            // Stop the soundtrack when the view disappears
+            // Stop the soundtrack when the view disappears.
             AudioManager.shared.stopSoundtrack()
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .background || newPhase == .inactive {
-                // Stop the soundtrack when the app goes to the background or becomes inactive
+                // Stop the soundtrack when the app goes to the background or becomes inactive.
                 AudioManager.shared.stopSoundtrack()
-            } else if newPhase == .active {
-                // Resume the soundtrack when the app becomes active
-                if !isSoundtrackMuted {
-                    AudioManager.shared.playSoundtrack()
-                }
+            } else if newPhase == .active, !isSoundtrackMuted {
+                // Resume the soundtrack when the app becomes active.
+                AudioManager.shared.playSoundtrack()
             }
         }
         .fullScreenCover(isPresented: $showGameBoard) {
             GameBoardView(isMuted: $isMuted, horizontalSizeClass: horizontalSizeClass, isSoundtrackMuted: $isSoundtrackMuted)
-                .transition(.scale(scale: 0.8, anchor: .center)) // Scale transition
         }
+    }
+
+    // MARK: - Scene Phase Handling
+    private func handleScenePhaseChange(_ newPhase: ScenePhase) {
+        if newPhase == .background || newPhase == .inactive {
+            // Stop the soundtrack when the app goes to the background or becomes inactive.
+            AudioManager.shared.stopSoundtrack()
+        } else if newPhase == .active, !isSoundtrackMuted {
+            // Resume the soundtrack when the app becomes active.
+            AudioManager.shared.playSoundtrack()
+        }
+    }
+}
+
+// MARK: - Subviews
+
+/// Displays the title of the game.
+struct TitleView: View {
+    var body: some View {
+        VStack {
+            Text("Serpientes")
+                .font(Font.custom("BagelFatOne-Regular", size: 60))
+                .foregroundColor(.lightGreen)
+                .padding(.bottom, -10)
+            Text("&")
+                .font(Font.custom("ChelseaMarket-Regular", size: 30))
+                .foregroundColor(.lightGreen)
+                .padding(.vertical, -10)
+            Text("Poemas")
+                .font(Font.custom("FleurDeLeah-Regular", size: 80))
+                .foregroundColor(.lightGreen)
+                .padding(.top, -20)
+                .padding(.bottom, 30)
+        }
+    }
+}
+
+/// Displays the "Start Game" button.
+struct StartButton: View {
+    @Binding var showGameBoard: Bool
+
+    var body: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                showGameBoard = true
+            }
+        }) {
+            Text("Empezar")
+                .font(Font.custom("ChelseaMarket-Regular", size: 25))
+                .bold()
+                .padding()
+                .frame(width: 202, height: 79)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color(red: 0.51, green: 0.83, blue: 0.51))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color(red: 0.31, green: 0.75, blue: 0.55), lineWidth: 7)
+                        )
+                )
+                .foregroundColor(.white)
+                .shadow(color: .gray, radius: 4, x: 2, y: 2)
+        }
+        .padding(.bottom, -20)
+    }
+}
+
+/// Displays the settings button in the lower-right corner.
+struct SettingsButton: View {
+    @Binding var showSettingsMenu: Bool
+    let horizontalSizeClass: UserInterfaceSizeClass?
+
+    var body: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Button(action: {
+                    withAnimation {
+                        showSettingsMenu.toggle()
+                    }
+                }) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: horizontalSizeClass == .compact ? 30 : 50))
+                        .foregroundColor(.gray)
+                        .padding()
+                        .background(Color.white.opacity(0.8))
+                        .clipShape(Circle())
+                        .shadow(color: .gray, radius: 4, x: 2, y: 2)
+                }
+                .padding()
+            }
+        }
+    }
+}
+
+/// Displays the settings menu overlay.
+struct SettingsMenu: View {
+    @Binding var isMuted: Bool
+    @Binding var isSoundtrackMuted: Bool
+    @Binding var showSettingsMenu: Bool
+
+    var body: some View {
+        ZStack {
+            // Semi-transparent overlay to block interaction with the background.
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    showSettingsMenu = false
+                }
+
+            // Settings menu content.
+            VStack(spacing: 20) {
+                Text("Settings")
+                    .font(.headline)
+                    .foregroundColor(.white)
+
+                ToggleButton(label: isSoundtrackMuted ? "Unmute Soundtrack" : "Mute Soundtrack") {
+                    isSoundtrackMuted.toggle()
+                    if isSoundtrackMuted {
+                        AudioManager.shared.pauseSoundtrack()
+                    } else {
+                        AudioManager.shared.playSoundtrack()
+                    }
+                }
+
+                ToggleButton(label: isMuted ? "Unmute Voice" : "Mute Voice") {
+                    isMuted.toggle()
+                }
+
+                Button(action: {
+                    showSettingsMenu = false
+                }) {
+                    Text("Close")
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.red.opacity(0.8))
+                        .cornerRadius(10)
+                }
+            }
+            .padding()
+            .background(Color.black.opacity(0.9))
+            .cornerRadius(15)
+            .shadow(radius: 10)
+        }
+    }
+}
+
+/// A reusable toggle button for settings.
+struct ToggleButton: View {
+    let label: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.gray.opacity(0.8))
+                .cornerRadius(10)
+        }
+    }
+}
+
+/// Displays the background image based on the device type.
+struct BackgroundView: View {
+    let horizontalSizeClass: UserInterfaceSizeClass?
+
+    var body: some View {
+        Image(horizontalSizeClass == .compact ? "mainScreen-iphone" : "mainScreen-ipad")
+            .resizable()
+            .ignoresSafeArea()
     }
 }
 
