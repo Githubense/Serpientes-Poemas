@@ -5,8 +5,9 @@ import AVFoundation
 struct MainBoardView: View {
     @State private var showGameBoard = false
     @State private var isMuted = false // State to control audio muting
+    @State private var isSoundtrackMuted = false // State to control soundtrack muting
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass // Detect device type
-    
+
     var body: some View {
         ZStack {
             // Dynamically load the background image based on the device type
@@ -69,25 +70,48 @@ struct MainBoardView: View {
                 .padding(.bottom, -20)
             }
         }
+        .onAppear {
+            // Start the soundtrack when the view appears
+            if !isSoundtrackMuted {
+                AudioManager.shared.playSoundtrack()
+            }
+        }
+        .onDisappear {
+            // Pause the soundtrack only if muted
+            if isSoundtrackMuted {
+                AudioManager.shared.pauseSoundtrack()
+            }
+        }
         .fullScreenCover(isPresented: $showGameBoard) {
-            GameBoardView(isMuted: $isMuted, horizontalSizeClass: horizontalSizeClass)
+            GameBoardView(isMuted: $isMuted, horizontalSizeClass: horizontalSizeClass, isSoundtrackMuted: $isSoundtrackMuted)
                 .transition(.scale(scale: 0.8, anchor: .center)) // Scale transition
         }
     }
 }
 
 struct GameBoardView: View {
+    let horizontalSizeClass: UserInterfaceSizeClass?
+    @Binding var isMuted: Bool // Binding to control audio muting
+    @Binding var isSoundtrackMuted: Bool // Binding to control soundtrack muting
+
+    @State private var showSettingsMenu = false // Controls the settings menu
+
     // MARK: - Layout Constants
     let rows = 6
     let columns = 8
     
     // MARK: - Verse Spaces
     let verseSpaces: [Int: String] = [
-        4: "Verse 1: The journey begins.",
-        10: "Verse 2: A twist in the path.",
-        18: "Verse 3: Overcoming the climb.",
-        25: "Verse 4: The calm before the storm.",
-        34: "Verse 5: A shining horizon."
+        0: "Verse 0: The beginning of the journey.",
+        1: "Verse 1: A step forward.",
+        2: "Verse 2: The path unfolds.",
+        3: "Verse 3: A moment of reflection.",
+        4: "Verse 4: The journey continues.",
+        5: "Verse 5: A glimpse of the horizon.",
+        10: "Verse 6: A twist in the path.",
+        18: "Verse 7: Overcoming the climb.",
+        25: "Verse 8: The calm before the storm.",
+        34: "Verse 9: A shining horizon."
     ]
     let totalSpaces: Int
     
@@ -96,24 +120,28 @@ struct GameBoardView: View {
     @State private var collectedVerses: [String] = [] // List of collected verses
     @State private var showDetailView = false // Controls the detailed view
     @State private var showEndGameView = false // Controls the end-game view
+    @State private var isVoiceMuted = false // Mute state for voice
     
     @AppStorage("playerPosition") private var savedPlayerPosition = 0
     @AppStorage("collectedVerses") private var savedCollectedVerses = ""
-
+    
     @Namespace private var animationNamespace
-
+    
     @State private var currentDiceImage = "noDice" // Default dice image before any roll
     @State private var isRolling = false // Prevent multiple rolls at the same time
     @State private var hasRolledDice = false // Track if the dice has been rolled
-    @State private var isBreathing = false // Control the breathing animation
-
-    @Binding var isMuted: Bool // Binding to control audio muting
-    let horizontalSizeClass: UserInterfaceSizeClass? // Add this parameter
-
+    
+    // MARK: - Background Soundtrack
+    private var soundtrackPlayer: AVAudioPlayer? = {
+        guard let url = Bundle.main.url(forResource: "Jungle Trip - Quincas Moreira", withExtension: "mp3") else { return nil }
+        return try? AVAudioPlayer(contentsOf: url)
+    }()
+    
     // Explicit initializer for @Binding property
-    init(isMuted: Binding<Bool>, horizontalSizeClass: UserInterfaceSizeClass?) {
+    init(isMuted: Binding<Bool>, horizontalSizeClass: UserInterfaceSizeClass?, isSoundtrackMuted: Binding<Bool>) {
         self._isMuted = isMuted
         self.horizontalSizeClass = horizontalSizeClass // Initialize the property
+        self._isSoundtrackMuted = isSoundtrackMuted
         totalSpaces = rows * columns
         playerPosition = savedPlayerPosition
         collectedVerses = savedCollectedVerses.isEmpty ? [] : savedCollectedVerses.components(separatedBy: "|")
@@ -126,6 +154,7 @@ struct GameBoardView: View {
         showEndGameView = false
         showDetailView = false
     }
+    
     var body: some View {
         ZStack {
             Image(horizontalSizeClass == .compact ? "background-iphone" : "background-ipad")
@@ -145,15 +174,15 @@ struct GameBoardView: View {
                         collectedVersesView
                         diceButton
                         
+                        // Settings Button
                         Button(action: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.5, blendDuration: 0)) {
-                                isMuted.toggle()
+                            withAnimation {
+                                showSettingsMenu.toggle()
                             }
                         }) {
-                            Image(systemName: isMuted ? "speaker.slash.circle.fill" : "speaker.wave.2.circle.fill")
-                                .font(.system(size: horizontalSizeClass == .compact ? 30 : 40)) // Adjust size dynamically
-                                .symbolRenderingMode(.hierarchical)
-                                .foregroundColor(isMuted ? .red : .green)
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 40))
+                                .foregroundColor(.gray)
                         }
                     }
                     .frame(width: 200)
@@ -162,6 +191,79 @@ struct GameBoardView: View {
                 
                 Spacer()
             }
+            .disabled(showSettingsMenu) // Disable interaction with the background when the menu is active
+            .blur(radius: showSettingsMenu ? 5 : 0) // Optional: Add a blur effect when the menu is active
+
+            // Settings menu
+            if showSettingsMenu {
+                ZStack {
+                    // Semi-transparent overlay to block interaction with the background
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            // Close the settings menu if the overlay is tapped
+                            showSettingsMenu = false
+                        }
+
+                    // Settings menu content
+                    VStack(spacing: 20) {
+                        Text("Settings")
+                            .font(.headline)
+                            .foregroundColor(.white)
+
+                        Button(action: {
+                            isSoundtrackMuted.toggle()
+                            if isSoundtrackMuted {
+                                AudioManager.shared.pauseSoundtrack()
+                            } else {
+                                AudioManager.shared.playSoundtrack()
+                            }
+                        }) {
+                            Text(isSoundtrackMuted ? "Unmute Soundtrack" : "Mute Soundtrack")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.gray.opacity(0.8))
+                                .cornerRadius(10)
+                        }
+
+                        Button(action: {
+                            isMuted.toggle()
+                        }) {
+                            Text(isMuted ? "Unmute Voice" : "Mute Voice")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.gray.opacity(0.8))
+                                .cornerRadius(10)
+                        }
+
+                        Button(action: {
+                            showSettingsMenu = false
+                        }) {
+                            Text("Close")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.red.opacity(0.8))
+                                .cornerRadius(10)
+                        }
+                    }
+                    .padding()
+                    .background(Color.black.opacity(0.9))
+                    .cornerRadius(15)
+                    .shadow(radius: 10)
+                }
+            }
+        }
+        .onAppear {
+            // Start the soundtrack when the view appears
+            if !isSoundtrackMuted {
+                soundtrackPlayer?.numberOfLoops = -1 // Loop indefinitely
+                AudioManager.shared.setVolume(to: 0.5, duration: 1.0) // Smoothly lower volume to 50%
+            }
+        }
+        .onDisappear {
+            if !isSoundtrackMuted {
+                AudioManager.shared.setVolume(to: 1.0, duration: 1.0) // Restore volume to 100% when leaving
+            }
         }
         .fullScreenCover(isPresented: $showDetailView) {
             if showEndGameView {
@@ -169,17 +271,17 @@ struct GameBoardView: View {
                     withAnimation(.easeInOut(duration: 0.5)) {
                         resetGame()
                     }
-                })
+                }, isMuted: $isMuted)
             } else {
-                DetailView(position: playerPosition, 
-                           verse: verseSpaces[playerPosition], 
-                           totalSpaces: totalSpaces, 
+                DetailView(position: playerPosition,
+                           verse: verseSpaces[playerPosition],
+                           totalSpaces: totalSpaces,
                            dismissAction: {
                                withAnimation(.easeInOut(duration: 0.5)) {
                                    showDetailView = false
                                }
-                           }, 
-                           isMuted: $isMuted, 
+                           },
+                           isMuted: $isMuted,
                            horizontalSizeClass: horizontalSizeClass) // Pass horizontalSizeClass
                 .matchedGeometryEffect(id: "detailView", in: animationNamespace)
             }
@@ -390,15 +492,14 @@ struct DetailView: View {
     let totalSpaces: Int
     let dismissAction: () -> Void
     @Binding var isMuted: Bool // Binding to control audio muting
-    let horizontalSizeClass: UserInterfaceSizeClass? // Add this parameter
+    let horizontalSizeClass: UserInterfaceSizeClass?
 
     var body: some View {
         ZStack {
-            
-            Color.black.ignoresSafeArea()
-            // Blurred background of the GameBoardView
-            GameBoardView(isMuted: $isMuted, horizontalSizeClass: horizontalSizeClass)
-                .blur(radius: 25) // Apply blur effect
+            // Blurred background of the existing GameBoardView
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .blur(radius: 10) // Apply blur effect
             
             // Foreground content of the DetailView
             VStack(spacing: 20) {
@@ -436,9 +537,7 @@ struct DetailView: View {
                         .background(Color.teal.opacity(0.8))
                         .cornerRadius(10)
                         .onAppear {
-                            if !isMuted {
-                                speakText(verse)
-                            }
+                            speakText(verse, isMuted: isMuted) // Pass isMuted to speakText
                             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                 dismissAction()
                             }
@@ -459,13 +558,24 @@ struct DetailView: View {
             }
             .padding()
         }
+        .onAppear {
+            if !isMuted {
+                AudioManager.shared.setVolume(to: 0.2, duration: 1.0) // Smoothly lower volume to 20%
+            }
+        }
+        .onDisappear {
+            if !isMuted {
+                AudioManager.shared.setVolume(to: 0.5, duration: 1.0) // Restore volume to 50% when leaving
+            }
+        }
     }
 }
 
 struct EndGameView: View {
     let collectedVerses: [String]
     let dismissAction: () -> Void
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass // Detect device type
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Binding var isMuted: Bool // Binding to control audio muting
 
     var body: some View {
         ZStack {
@@ -499,7 +609,7 @@ struct EndGameView: View {
                 .cornerRadius(10)
                 
                 Button(action: {
-                    collectedVerses.forEach { speakText($0) }
+                    collectedVerses.forEach { speakText($0, isMuted: isMuted) } // Pass isMuted to speakText
                     dismissAction()
                 }) {
                     Text("Cerrar")
@@ -525,6 +635,12 @@ struct EndGameView: View {
             }
             .padding()
         }
+        .onAppear {
+            AudioManager.shared.setVolume(to: 0.2, duration: 1.0) // Smoothly lower volume to 20%
+        }
+        .onDisappear {
+            AudioManager.shared.setVolume(to: 0.5, duration: 1.0) // Restore volume to 50% when leaving
+        }
     }
 }
 
@@ -546,7 +662,8 @@ func createSnow() -> VortexSystem {
     return system
 }
 
-func speakText(_ text: String) {
+func speakText(_ text: String, isMuted: Bool) {
+    guard !isMuted else { return } // Do not speak if muted
     let synthesizer = AVSpeechSynthesizer()
     let utterance = AVSpeechUtterance(string: text)
     utterance.voice = AVSpeechSynthesisVoice(language: "es-MX") // Set to Spanish (Mexico)
